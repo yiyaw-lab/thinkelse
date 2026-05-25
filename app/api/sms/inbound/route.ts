@@ -1,6 +1,14 @@
 import { NextResponse } from "next/server";
-import { supabaseAdmin } from "@/lib/supabaseAdmin";
+
 import { getOnboardingReply } from "@/lib/onboarding";
+import {
+  createFamily,
+  findFamilyByPhone,
+  updateFamily,
+} from "@/lib/db/families";
+
+import { supabaseAdmin } from "@/lib/supabaseAdmin";
+import { createSmsReply } from "@/lib/twilio/twiml";
 
 export async function POST(request: Request) {
   const formData = await request.formData();
@@ -21,10 +29,7 @@ export async function POST(request: Request) {
   let replyText = "";
 
   if (!existingFamily) {
-    await supabaseAdmin.from("families").insert({
-      phone: from,
-      onboarding_step: "parent_name",
-    });
+    await createFamily(from);
 
     replyText =
       "Welcome to Else. I’m Elsy, your family curiosity companion. What should I call you?";
@@ -65,24 +70,22 @@ export async function POST(request: Request) {
 
     const onboarding = getOnboardingReply(currentStep, body);
 
-    await supabaseAdmin
-      .from("families")
-      .update({
+    await updateFamily(existingFamily.id, {
         onboarding_step: onboarding.nextStep,
         parent_name:
-          currentStep === "parent_name" ? body : existingFamily.parent_name,
+          currentStep === "parent_name"
+            ? body
+            : existingFamily.parent_name,
         preferred_time:
-          currentStep === "preferred_time" ? body : existingFamily.preferred_time,
-      })
-      .eq("id", existingFamily.id);
+          currentStep === "preferred_time"
+            ? body
+            : existingFamily.preferred_time,
+      });
 
     replyText = onboarding.reply;
   }
 
-  const twiml = `<?xml version="1.0" encoding="UTF-8"?>
-<Response>
-  <Message>${replyText}</Message>
-</Response>`;
+  const twiml = createSmsReply(replyText);
 
   return new NextResponse(twiml, {
     headers: {
