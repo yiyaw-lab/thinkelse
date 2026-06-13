@@ -1,3 +1,4 @@
+import { after } from "next/server";
 import { NextResponse } from "next/server";
 
 import { generateQuest } from "@/lib/agents/generateQuest";
@@ -189,7 +190,13 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: true });
   }
 
-  await handleInboundMessage(from, body);
+  after(async () => {
+    try {
+      await handleInboundMessage(from, body);
+    } catch (error) {
+      console.error("Inbound SMS handler failed:", error);
+    }
+  });
 
   return NextResponse.json({ ok: true });
 }

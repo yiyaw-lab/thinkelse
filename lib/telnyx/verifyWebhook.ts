@@ -11,6 +11,20 @@ function ed25519PublicKeyFromRaw(rawKey: Buffer) {
   });
 }
 
+function parseEd25519PublicKey(publicKeyBase64: string) {
+  const keyBytes = Buffer.from(publicKeyBase64.trim(), "base64");
+
+  if (keyBytes.length === 32) {
+    return ed25519PublicKeyFromRaw(keyBytes);
+  }
+
+  return createPublicKey({
+    key: keyBytes,
+    format: "der",
+    type: "spki",
+  });
+}
+
 export function verifyTelnyxWebhookSignature({
   rawBody,
   signature,
@@ -38,13 +52,15 @@ export function verifyTelnyxWebhookSignature({
     return false;
   }
 
-  let publicKeyBytes: Buffer;
   let signatureBytes: Buffer;
 
   try {
-    publicKeyBytes = Buffer.from(publicKeyBase64, "base64");
     signatureBytes = Buffer.from(signature, "base64");
   } catch {
+    return false;
+  }
+
+  if (!publicKeyBase64.trim()) {
     return false;
   }
 
@@ -53,7 +69,7 @@ export function verifyTelnyxWebhookSignature({
   return verify(
     null,
     signedPayload,
-    ed25519PublicKeyFromRaw(publicKeyBytes),
+    parseEd25519PublicKey(publicKeyBase64),
     signatureBytes,
   );
 }
