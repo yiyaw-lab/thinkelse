@@ -1,33 +1,44 @@
-import nacl from "tweetnacl";
+import Telnyx from "telnyx";
 
 const DEFAULT_TOLERANCE_SECONDS = 300;
 
-function decodeBase64(value: string): Uint8Array | null {
+function parsePublicKey(publicKeyBase64: string): Uint8Array | null {
+  const cleaned = publicKeyBase64.trim().replace(/^["']|["']$/g, "").replace(/\s/g, "");
+
+  let bytes: Buffer;
   try {
-    return new Uint8Array(Buffer.from(value, "base64"));
+    bytes = Buffer.from(cleaned, "base64");
   } catch {
     return null;
   }
-}
 
-function normalizePublicKey(bytes: Uint8Array): Uint8Array | null {
   if (bytes.length === 32) {
-    return bytes;
+    return new Uint8Array(bytes);
   }
 
-  // SPKI DER encoding for Ed25519: 12-byte prefix + 32-byte key
   if (bytes.length === 44) {
-    return bytes.slice(-32);
+    return new Uint8Array(bytes.subarray(-32));
   }
 
   return null;
 }
 
+function parseSignature(signature: string): Uint8Array | null {
+  try {
+    return new Uint8Array(Buffer.from(signature, "base64"));
+  } catch {
+    return null;
+  }
+}
+
 export function getPublicKeyByteLength(publicKeyBase64: string): number | null {
-  const bytes = decodeBase64(
-    publicKeyBase64.trim().replace(/^["']|["']$/g, "").replace(/\s/g, ""),
-  );
-  return bytes?.length ?? null;
+  const cleaned = publicKeyBase64.trim().replace(/^["']|["']$/g, "").replace(/\s/g, "");
+
+  try {
+    return Buffer.from(cleaned, "base64").length;
+  } catch {
+    return null;
+  }
 }
 
 export function verifyTelnyxWebhookSignature({
@@ -47,30 +58,25 @@ export function verifyTelnyxWebhookSignature({
     return false;
   }
 
-  const timestampSec = Number.parseInt(timestamp, 10);
-  if (Number.isNaN(timestampSec)) {
-    return false;
-  }
-
-  const timestampAge = Math.floor(Date.now() / 1000) - timestampSec;
-  if (toleranceSeconds > 0 && timestampAge > toleranceSeconds) {
-    return false;
-  }
-
-  const publicKey = normalizePublicKey(
-    decodeBase64(
-      publicKeyBase64.trim().replace(/^["']|["']$/g, "").replace(/\s/g, ""),
-    ) ?? new Uint8Array(),
-  );
-  const signatureBytes = decodeBase64(signature);
+  const publicKey = parsePublicKey(publicKeyBase64);
+  const signatureBytes = parseSignature(signature);
 
   if (!publicKey || !signatureBytes) {
     return false;
   }
 
-  const payloadBuffer = Buffer.from(`${timestamp}|${rawBody}`, "utf8");
-
-  return nacl.sign.detached.verify(payloadBuffer, signatureBytes, publicKey);
+  try {
+    Telnyx.webhooks.constructEvent(
+      rawBody,
+      signatureBytes,
+      timestamp,
+      publicKey,
+      toleranceSeconds,
+    );
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 export function shouldVerifyTelnyxWebhook(): boolean {
