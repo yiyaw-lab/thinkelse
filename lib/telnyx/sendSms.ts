@@ -17,6 +17,6 @@ export async function sendSms(to: string, body: string) {
 
   if (!response.ok) {
     const error = await response.text();
-    throw new Error(`Telnyx SMS failed: ${error}`);
+    throw new Error(`Telnyx SMS failed (${response.status}): ${error}`);
   }
 }

@@ -1,28 +1,13 @@
-import { createPublicKey, verify } from "node:crypto";
+import nacl from "tweetnacl";
 
 const DEFAULT_TOLERANCE_SECONDS = 300;
-const ED25519_SPKI_PREFIX = Buffer.from("302a300506032b6570032100", "hex");
 
-function ed25519PublicKeyFromRaw(rawKey: Buffer) {
-  return createPublicKey({
-    key: Buffer.concat([ED25519_SPKI_PREFIX, rawKey]),
-    format: "der",
-    type: "spki",
-  });
-}
-
-function parseEd25519PublicKey(publicKeyBase64: string) {
-  const keyBytes = Buffer.from(publicKeyBase64.trim(), "base64");
-
-  if (keyBytes.length === 32) {
-    return ed25519PublicKeyFromRaw(keyBytes);
+function decodeBase64(value: string): Uint8Array | null {
+  try {
+    return new Uint8Array(Buffer.from(value, "base64"));
+  } catch {
+    return null;
   }
-
-  return createPublicKey({
-    key: keyBytes,
-    format: "der",
-    type: "spki",
-  });
 }
 
 export function verifyTelnyxWebhookSignature({
@@ -47,31 +32,23 @@ export function verifyTelnyxWebhookSignature({
     return false;
   }
 
-  const now = Math.floor(Date.now() / 1000);
-  if (Math.abs(now - timestampSec) > toleranceSeconds) {
+  const timestampAge = Math.floor(Date.now() / 1000) - timestampSec;
+  if (toleranceSeconds > 0 && timestampAge > toleranceSeconds) {
     return false;
   }
 
-  let signatureBytes: Buffer;
-
-  try {
-    signatureBytes = Buffer.from(signature, "base64");
-  } catch {
-    return false;
-  }
-
-  if (!publicKeyBase64.trim()) {
-    return false;
-  }
-
-  const signedPayload = Buffer.from(`${timestamp}|${rawBody}`);
-
-  return verify(
-    null,
-    signedPayload,
-    parseEd25519PublicKey(publicKeyBase64),
-    signatureBytes,
+  const publicKey = decodeBase64(
+    publicKeyBase64.trim().replace(/^["']|["']$/g, "").replace(/\s/g, ""),
   );
+  const signatureBytes = decodeBase64(signature);
+
+  if (!publicKey || !signatureBytes || publicKey.length !== 32) {
+    return false;
+  }
+
+  const payloadBuffer = Buffer.from(`${timestamp}|${rawBody}`, "utf8");
+
+  return nacl.sign.detached.verify(payloadBuffer, signatureBytes, publicKey);
 }
 
 export function shouldVerifyTelnyxWebhook(): boolean {
