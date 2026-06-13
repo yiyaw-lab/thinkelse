@@ -1,12 +1,17 @@
+"use client";
+
+import { useId } from "react";
+
 type ElsyFaceProps = {
   className?: string;
   blink?: boolean;
   showStar?: boolean;
   mood?: "curious" | "comforting";
+  variant?: "night" | "pastel";
 };
 
 /**
- * Shared Elsy spark face — flame/spark silhouette with crescent curl.
+ * Elsy spark face — flame silhouette with optional held star.
  * 80×80 unit space.
  */
 export function ElsyFace({
@@ -14,9 +19,13 @@ export function ElsyFace({
   blink = false,
   showStar = false,
   mood = "curious",
+  variant = "pastel",
 }: ElsyFaceProps) {
+  const uid = useId().replace(/:/g, "");
+  const bodyGrad = `elsy-body-${uid}`;
   const blinkClass = blink ? "buddy-blink" : undefined;
   const isComforting = mood === "comforting";
+  const isPastel = variant === "pastel";
   const starY = isComforting ? 56 : 62;
   const starClass = isComforting ? "star-pulse-slow" : "star-pulse";
 
@@ -27,74 +36,81 @@ export function ElsyFace({
         cy="48"
         rx="32"
         ry="34"
-        fill="var(--orchid-500)"
-        fillOpacity={isComforting ? "0.08" : "0.15"}
+        fill={isPastel ? "#b8a6f5" : "var(--orchid-500)"}
+        fillOpacity={isComforting ? "0.1" : "0.16"}
       />
 
-      {/* Flame / spark body */}
       <path
-        d="M40 8C40 8 52 22 54 38C56 54 48 68 40 72C32 68 24 54 26 38C28 22 40 8 40 8Z"
-        fill="url(#elsy-body-grad)"
-        stroke="var(--violet-300)"
-        strokeWidth="1.5"
-        strokeOpacity="0.5"
+        d="M40 10C40 10 51 23 53 38C55 53 48 66 40 70C32 66 25 53 27 38C29 23 40 10 40 10Z"
+        fill={`url(#${bodyGrad})`}
+        stroke={isPastel ? "#d4c4ff" : "var(--violet-300)"}
+        strokeWidth="1.25"
+        strokeOpacity="0.65"
       />
 
-      {/* Crescent curl at top */}
       <path
-        d="M40 14C40 14 34 8 30 12C27 15 29 20 34 18"
-        stroke="var(--star-300)"
-        strokeWidth="2"
+        d="M40 15C40 15 35 10 31 13C28 16 30 20 34 18"
+        stroke="#f8e9b8"
+        strokeWidth="1.75"
         strokeLinecap="round"
         fill="none"
-        opacity="0.7"
+        opacity="0.85"
       />
 
-      {/* Inner warmth */}
-      <ellipse cx="40" cy="46" rx="18" ry="20" fill="#fff" fillOpacity="0.12" />
+      <ellipse cx="40" cy="45" rx="16" ry="18" fill="#fff" fillOpacity="0.14" />
 
-      {/* Blush */}
-      <ellipse cx="28" cy="50" rx="5" ry="3.5" fill="var(--blush-400)" fillOpacity="0.5" />
-      <ellipse cx="52" cy="50" rx="5" ry="3.5" fill="var(--blush-400)" fillOpacity="0.5" />
+      <ellipse
+        cx="28"
+        cy="49"
+        rx="4.5"
+        ry="3"
+        fill={isPastel ? "#f0b8d8" : "var(--blush-400)"}
+        fillOpacity="0.45"
+      />
+      <ellipse
+        cx="52"
+        cy="49"
+        rx="4.5"
+        ry="3"
+        fill={isPastel ? "#f0b8d8" : "var(--blush-400)"}
+        fillOpacity="0.45"
+      />
 
-      {/* Eyes — glossy ovals, slightly below midpoint */}
       <g className={blinkClass}>
-        <ellipse cx="33" cy="44" rx="6" ry="7" fill="#fff" fillOpacity="0.95" />
-        <ellipse cx="33" cy="45" rx="3" ry="3.5" fill="var(--ink-800)" />
-        <circle cx="32" cy="43.5" r="1.2" fill="#fff" />
+        <ellipse cx="33" cy="43" rx="5.5" ry="6.5" fill="#fff" fillOpacity="0.96" />
+        <ellipse cx="33" cy="44" rx="2.8" ry="3.2" fill="#3d3558" />
+        <circle cx="32.2" cy="42.5" r="1" fill="#fff" />
       </g>
       <g className={blinkClass}>
-        <ellipse cx="47" cy="44" rx="6" ry="7" fill="#fff" fillOpacity="0.95" />
-        <ellipse cx="47" cy="45" rx="3" ry="3.5" fill="var(--ink-800)" />
-        <circle cx="46" cy="43.5" r="1.2" fill="#fff" />
+        <ellipse cx="47" cy="43" rx="5.5" ry="6.5" fill="#fff" fillOpacity="0.96" />
+        <ellipse cx="47" cy="44" rx="2.8" ry="3.2" fill="#3d3558" />
+        <circle cx="46.2" cy="42.5" r="1" fill="#fff" />
       </g>
 
-      {/* Tiny smile */}
       <path
-        d="M35 54C37 56 43 56 45 54"
-        stroke="var(--ink-800)"
-        strokeWidth="1.8"
+        d="M35 53.5C37 55.5 43 55.5 45 53.5"
+        stroke="#3d3558"
+        strokeWidth="1.6"
         strokeLinecap="round"
         fill="none"
-        opacity="0.6"
+        opacity="0.55"
       />
 
-      {/* Held star */}
       {showStar && (
         <g className={starClass} transform={`translate(40, ${starY})`}>
-          <circle cx="0" cy="0" r="10" fill="var(--star-300)" fillOpacity={isComforting ? "0.25" : "0"} />
+          <circle cx="0" cy="0" r="9" fill="#f8e9b8" fillOpacity={isComforting ? "0.22" : "0.12"} />
           <path
-            d="M0 -6C0.5 -2 3 0 6 0C3 0 0.5 2 0 6C-0.5 2 -3 0 -6 0C-3 0 -0.5 -2 0 -6Z"
-            fill="var(--star-300)"
+            d="M0 -5.5C0.4 -1.8 2.8 0 5.5 0C2.8 0 0.4 1.8 0 5.5C-0.4 1.8 -2.8 0 -5.5 0C-2.8 0 -0.4 -1.8 0 -5.5Z"
+            fill="#f8e9b8"
           />
         </g>
       )}
 
       <defs>
-        <radialGradient id="elsy-body-grad" cx="40" cy="40" r="30">
-          <stop stopColor="var(--peach-300)" />
-          <stop offset="0.6" stopColor="var(--orchid-500)" stopOpacity="0.9" />
-          <stop offset="1" stopColor="var(--plum-700)" />
+        <radialGradient id={bodyGrad} cx="40" cy="38" r="28">
+          <stop stopColor={isPastel ? "#f5efff" : "var(--peach-300)"} />
+          <stop offset="0.55" stopColor={isPastel ? "#c9b8ff" : "var(--orchid-500)"} stopOpacity="0.95" />
+          <stop offset="1" stopColor={isPastel ? "#9f8fef" : "var(--plum-700)"} />
         </radialGradient>
       </defs>
     </g>

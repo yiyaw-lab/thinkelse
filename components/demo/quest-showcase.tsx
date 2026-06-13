@@ -52,8 +52,8 @@ export function QuestShowcase() {
             aria-pressed={i === active}
             className={`rounded-xl px-4 py-3 text-left text-sm font-medium transition-colors ${
               i === active
-                ? "bg-white/80 text-ink-800 shadow-sm"
-                : "text-muted hover:bg-white/40 hover:text-ink-800"
+                ? "bg-white text-pool-ink shadow-sm ring-1 ring-pool-line"
+                : "text-pool-muted hover:bg-white hover:text-pool-ink"
             }`}
           >
             {q.title}
@@ -61,26 +61,26 @@ export function QuestShowcase() {
         ))}
       </nav>
 
-      <article key={quest.id} className="surface-glass depth-lift demo-quest-card rounded-2xl p-7 sm:p-8">
+      <article key={quest.id} className="pool-panel demo-quest-card sm:p-8">
         <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-2.5">
-            <ElsyAvatar size={32} depth3d />
-            <span className="t-label text-muted">{quest.tag}</span>
+            <ElsyAvatar size={28} />
+            <span className="pool-eyebrow text-[0.6875rem]">{quest.tag}</span>
           </div>
-          <span className="chip text-xs">{quest.time}</span>
+          <span className="pool-chip text-xs">{quest.time}</span>
         </div>
 
-        <h3 className="t-h2 mb-3 text-ink-800">{quest.title}</h3>
-        <p className="mb-6 text-lg leading-relaxed text-muted">{quest.question}</p>
+        <h3 className="pool-display-sm mb-3 text-[1.75rem]">{quest.title}</h3>
+        <p className="mb-6 text-lg leading-relaxed text-pool-muted">{quest.question}</p>
 
-        <div className="mb-3 rounded-xl bg-rose-100/50 p-5">
-          <p className="mb-1.5 t-label text-ink-800">Mission</p>
-          <p className="leading-relaxed text-muted">{quest.mission}</p>
+        <div className="mb-3 rounded-xl bg-pool-bg p-5">
+          <p className="mb-1.5 pool-eyebrow text-[0.6875rem] text-pool-ink">Mission</p>
+          <p className="leading-relaxed text-pool-muted">{quest.mission}</p>
         </div>
 
-        <div className="rounded-xl bg-mint-200/30 p-5">
-          <p className="mb-1.5 t-label text-ink-800">Think about</p>
-          <p className="leading-relaxed text-muted">{quest.think}</p>
+        <div className="rounded-xl bg-pool-bg p-5">
+          <p className="mb-1.5 pool-eyebrow text-[0.6875rem] text-pool-ink">Think about</p>
+          <p className="leading-relaxed text-pool-muted">{quest.think}</p>
         </div>
       </article>
     </div>

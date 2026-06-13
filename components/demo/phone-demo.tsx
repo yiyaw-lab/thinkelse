@@ -1,158 +1,89 @@
 "use client";
 
-import { ArrowUp } from "lucide-react";
-import { useEffect, useState } from "react";
+import { ArrowUp, ChevronLeft, ChevronRight, Mic, Plus, Video } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 import { ElsyAvatar } from "@/components/brand/elsy-avatar";
+import {
+  type DemoItem,
+  type DemoMessage,
+  isTimestamp,
+  QUEST_NARRATIVE,
+} from "@/components/demo/quest-narrative";
 
-type Scene = {
-  id: string;
-  label: string;
-  messages: Message[];
+type PhoneDemoProps = {
+  className?: string;
+  activeStep: number;
+  messages: readonly DemoItem[];
 };
 
-type Message = {
-  id: string;
-  from: "user" | "elsy";
-  text: string;
-  meta?: string;
-  card?: {
-    label: string;
-    title: string;
-    body: string;
-    mission?: string;
-  };
-};
+function elsyTypingDelay(message: DemoMessage) {
+  return Math.min(1200, 500 + message.text.length * 8);
+}
 
-const SCENES: Scene[] = [
-  {
-    id: "onboard",
-    label: "Hello",
-    messages: [
-      { id: "1", from: "user", text: "HELLO" },
-      {
-        id: "2",
-        from: "elsy",
-        text: "Welcome to Else! I'm Elsy, your family's curiosity coach. Tell me a little about your explorer — their name, age, and what kinds of questions light them up. We'll send the first quest tomorrow morning.",
-      },
-      {
-        id: "3",
-        from: "elsy",
-        text: "Perfect — you're all set. Look for your first quest tomorrow at 8:00 AM. In the meantime, keep an eye out for one beautiful question today.",
-      },
-    ],
-  },
-  {
-    id: "quest",
-    label: "Quest",
-    messages: [
-      {
-        id: "1",
-        from: "elsy",
-        meta: "Today's quest · 8:00 AM",
-        text: "",
-        card: {
-          label: "Daily quest",
-          title: "The Shadow Detective",
-          body: "Why do shadows change shape throughout the day? What do you think is making them stretch and shrink?",
-          mission:
-            "Go outside at three different times today. Trace your shadow with chalk each time and notice when it's longest and shortest.",
-        },
-      },
-      {
-        id: "2",
-        from: "elsy",
-        text: "Text me back when they've tried the mission — I'll send a follow-up to stretch their thinking one level deeper.",
-      },
-    ],
-  },
-  {
-    id: "followup",
-    label: "Deeper",
-    messages: [
-      {
-        id: "1",
-        from: "user",
-        text: "Mira noticed her shadow was longest right before dinner, and she wondered if shadows ever disappear completely.",
-      },
-      {
-        id: "2",
-        from: "elsy",
-        text: "Sharp noticing — that's exactly the kind of observation quests are built for. Ask her: where do shadows go when clouds cover the sky? See what theory she comes up with before you explain.",
-      },
-    ],
-  },
-];
+function StatusBar() {
+  return (
+    <div className="imessage-status-bar" aria-hidden>
+      <span>9:41</span>
+      <div className="imessage-island" />
+      <span className="flex items-center gap-1 text-[0.7rem]">
+        <span>5G</span>
+        <span className="inline-block h-2.5 w-5 rounded-[2px] border border-current p-px">
+          <span className="block h-full w-3/4 rounded-[1px] bg-current" />
+        </span>
+      </span>
+    </div>
+  );
+}
 
 function TypingIndicator() {
   return (
-    <div className="flex max-w-[72%] items-center gap-1.5 rounded-2xl rounded-bl-md bg-cream-50/90 px-4 py-3">
-      <span className="demo-typing-dot h-1.5 w-1.5 rounded-full bg-muted-fg/50" />
-      <span className="demo-typing-dot h-1.5 w-1.5 rounded-full bg-muted-fg/50 [animation-delay:0.15s]" />
-      <span className="demo-typing-dot h-1.5 w-1.5 rounded-full bg-muted-fg/50 [animation-delay:0.3s]" />
+    <div className="imessage-row imessage-row--received">
+      <div className="imessage-typing" aria-label="Elsy is typing">
+        <span className="imessage-typing-dot" />
+        <span className="imessage-typing-dot [animation-delay:0.15s]" />
+        <span className="imessage-typing-dot [animation-delay:0.3s]" />
+      </div>
     </div>
   );
 }
 
-function MessageBubble({ message }: { message: Message }) {
+function MessageBubble({ message }: { message: DemoMessage }) {
   if (message.from === "user") {
     return (
-      <div className="ml-auto max-w-[82%] animate-[demo-in_0.4s_ease-out]">
-        <div className="rounded-2xl rounded-br-md bg-orchid-500 px-4 py-2.5 text-[13px] font-medium leading-relaxed text-white">
-          {message.text}
-        </div>
-      </div>
-    );
-  }
-
-  if (message.card && !message.text) {
-    return (
-      <div className="max-w-[94%] animate-[demo-in_0.4s_ease-out]">
-        {message.meta && (
-          <p className="mb-1.5 t-label text-violet-300">{message.meta}</p>
-        )}
-        <div className="surface-glass overflow-hidden rounded-2xl">
-          <div className="border-b border-border bg-rose-100/50 px-3.5 py-2">
-            <p className="t-label text-muted">{message.card.label}</p>
-          </div>
-          <div className="space-y-2.5 p-3.5">
-            <p className="font-display text-[15px] font-semibold leading-snug text-ink-800">
-              {message.card.title}
-            </p>
-            <p className="text-[13px] leading-relaxed text-muted">{message.card.body}</p>
-            {message.card.mission && (
-              <div className="rounded-xl bg-mint-200/40 px-3 py-2.5">
-                <p className="mb-0.5 t-label text-ink-800">Mission</p>
-                <p className="text-[13px] leading-relaxed text-muted">
-                  {message.card.mission}
-                </p>
-              </div>
-            )}
-          </div>
-        </div>
+      <div className="imessage-row imessage-row--sent demo-message-in">
+        <div className="imessage-bubble-sent whitespace-pre-line">{message.text}</div>
       </div>
     );
   }
 
   return (
-    <div className="max-w-[88%] animate-[demo-in_0.4s_ease-out]">
-      {message.text && (
-        <div className="rounded-2xl rounded-bl-md bg-cream-50/95 px-4 py-2.5 text-[13px] leading-relaxed text-ink-800">
-          {message.text}
-        </div>
-      )}
+    <div className="imessage-row imessage-row--received demo-message-in">
+      <div className="imessage-bubble-received whitespace-pre-line">{message.text}</div>
     </div>
   );
 }
 
-export function PhoneDemo({ className = "" }: { className?: string }) {
-  const [sceneIndex, setSceneIndex] = useState(0);
+export function PhoneDemo({ className = "", activeStep, messages }: PhoneDemoProps) {
+  const threadRef = useRef<HTMLDivElement>(null);
+  const timersRef = useRef<number[]>([]);
+  const prevStepRef = useRef(0);
   const [visibleCount, setVisibleCount] = useState(0);
+  const [composerText, setComposerText] = useState("");
   const [typing, setTyping] = useState(false);
   const [reducedMotion, setReducedMotion] = useState(false);
-  const [paused, setPaused] = useState(false);
 
-  const scene = SCENES[sceneIndex];
-  const messages = scene.messages;
+  const targetCount = messages.length;
+
+  function clearTimers() {
+    timersRef.current.forEach((id) => window.clearTimeout(id));
+    timersRef.current = [];
+  }
+
+  function schedule(fn: () => void, ms: number) {
+    const id = window.setTimeout(fn, ms);
+    timersRef.current.push(id);
+    return id;
+  }
 
   useEffect(() => {
     const media = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -162,93 +93,163 @@ export function PhoneDemo({ className = "" }: { className?: string }) {
     return () => media.removeEventListener("change", update);
   }, []);
 
-  useEffect(() => {
-    setVisibleCount(0);
-    setTyping(false);
-  }, [sceneIndex]);
+  useEffect(() => () => clearTimers(), []);
 
+  // Sync visible messages when scroll step changes
   useEffect(() => {
-    if (paused || reducedMotion) {
-      if (reducedMotion) setVisibleCount(messages.length);
+    clearTimers();
+    setTyping(false);
+    setComposerText("");
+
+    if (reducedMotion) {
+      setVisibleCount(targetCount);
+      prevStepRef.current = activeStep;
       return;
     }
 
-    if (visibleCount >= messages.length) {
-      const pause = window.setTimeout(() => {
-        setSceneIndex((i) => (i + 1) % SCENES.length);
-      }, 2800);
-      return () => window.clearTimeout(pause);
+    const prevStep = prevStepRef.current;
+    if (prevStep === activeStep) return;
+
+    const stepDelta = activeStep - prevStep;
+    prevStepRef.current = activeStep;
+
+    if (stepDelta < 0 || stepDelta > 1) {
+      setVisibleCount(targetCount);
+      return;
     }
+
+    if (stepDelta === 1) {
+      const prevTarget = QUEST_NARRATIVE[prevStep]?.messages.length ?? 0;
+      setVisibleCount(prevTarget);
+    }
+  }, [activeStep, targetCount, reducedMotion]);
+
+  useEffect(() => {
+    const el = threadRef.current;
+    if (!el) return;
+    el.scrollTo({
+      top: el.scrollHeight,
+      behavior: reducedMotion ? "auto" : "smooth",
+    });
+  }, [visibleCount, typing, composerText, reducedMotion]);
+
+  useEffect(() => {
+    if (reducedMotion) return;
+
+    clearTimers();
+
+    if (visibleCount >= targetCount) return;
 
     const next = messages[visibleCount];
-    const isElsy = next.from === "elsy";
-    const delay = visibleCount === 0 ? 400 : isElsy ? 1100 : 750;
+    if (!next) return;
 
-    if (isElsy && visibleCount > 0) {
-      setTyping(true);
-      const typingTimer = window.setTimeout(() => {
-        setTyping(false);
-        setVisibleCount((c) => c + 1);
-      }, delay);
-      return () => window.clearTimeout(typingTimer);
+    if (isTimestamp(next)) {
+      schedule(() => setVisibleCount((c) => c + 1), 220);
+      return clearTimers;
     }
 
-    const timer = window.setTimeout(() => setVisibleCount((c) => c + 1), delay);
-    return () => window.clearTimeout(timer);
-  }, [visibleCount, messages, reducedMotion, paused]);
+    if (next.from === "user") {
+      schedule(() => setComposerText(next.text), 200);
+      schedule(() => {
+        setComposerText("");
+        setVisibleCount((c) => c + 1);
+      }, 780);
+      return clearTimers;
+    }
+
+    schedule(() => setTyping(true), 160);
+    schedule(() => {
+      setTyping(false);
+      setVisibleCount((c) => c + 1);
+    }, 160 + elsyTypingDelay(next));
+
+    return clearTimers;
+  }, [visibleCount, targetCount, messages, reducedMotion]);
+
+  const visibleItems = messages.slice(0, visibleCount);
 
   return (
     <div
-      className={`relative mx-auto w-full max-w-[360px] ${className}`}
-      aria-label="Else SMS demo"
-      onMouseEnter={() => setPaused(true)}
-      onMouseLeave={() => setPaused(false)}
+      className={`relative w-full transition-opacity duration-500 ${className}`}
+      aria-label="Else iMessage demo"
     >
-      <div className="surface-glass depth-float overflow-hidden rounded-2xl">
-        <div className="flex items-center gap-3 border-b border-border bg-white/60 px-4 py-3.5">
-          <ElsyAvatar size={36} alive depth3d />
-          <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-semibold text-ink-800">Elsy</p>
-            <p className="flex items-center gap-1.5 text-xs text-muted">
-              <span className="h-1.5 w-1.5 rounded-full bg-mint-200" aria-hidden />
-              curiosity coach
-            </p>
+      <div className="imessage-device">
+        <div className="imessage-screen">
+          <StatusBar />
+
+          <div className="imessage-nav">
+            <button
+              type="button"
+              className="flex items-center text-pool-blue"
+              aria-hidden
+              tabIndex={-1}
+            >
+              <ChevronLeft className="h-6 w-6" strokeWidth={2.25} />
+            </button>
+
+            <div className="imessage-nav-contact">
+              <ElsyAvatar size={36} />
+              <div className="imessage-nav-name">
+                <span>Elsy</span>
+                <ChevronRight className="h-3.5 w-3.5 text-[#c7c7cc]" strokeWidth={2.5} />
+              </div>
+            </div>
+
+            <button
+              type="button"
+              className="flex items-center justify-end text-pool-blue"
+              aria-hidden
+              tabIndex={-1}
+            >
+              <Video className="h-5 w-5" strokeWidth={2} />
+            </button>
           </div>
-        </div>
 
-        <div className="flex min-h-[400px] flex-col justify-end gap-2.5 bg-cream-50/50 p-4">
-          {messages.slice(0, visibleCount).map((message) => (
-            <MessageBubble key={message.id} message={message} />
-          ))}
-          {typing && <TypingIndicator />}
-        </div>
-
-        <div className="border-t border-border bg-white/40 px-4 py-3">
-          <div className="flex items-center gap-2 rounded-full border border-border bg-cream-50/80 px-3.5 py-2 text-sm text-muted">
-            <span className="flex-1">Message</span>
-            <span className="flex h-7 w-7 items-center justify-center rounded-full bg-orchid-500 text-white">
-              <ArrowUp className="h-3.5 w-3.5" strokeWidth={2.5} aria-hidden />
-            </span>
+          <div ref={threadRef} className="imessage-thread">
+            {visibleItems.map((item) =>
+              isTimestamp(item) ? (
+                <p key={item.id} className="imessage-timestamp demo-message-in">
+                  {item.text}
+                </p>
+              ) : (
+                <MessageBubble key={item.id} message={item} />
+              ),
+            )}
+            {typing && <TypingIndicator />}
           </div>
-        </div>
-      </div>
 
-      <div className="mx-auto mt-4 flex max-w-[280px] gap-2">
-        {SCENES.map((s, i) => (
-          <button
-            key={s.id}
-            type="button"
-            onClick={() => setSceneIndex(i)}
-            aria-pressed={i === sceneIndex}
-            className={`flex-1 rounded-full px-3 py-1.5 text-xs font-semibold transition-colors ${
-              i === sceneIndex
-                ? "bg-orchid-500 text-white"
-                : "bg-white/60 text-muted hover:text-ink-800"
-            }`}
-          >
-            {s.label}
-          </button>
-        ))}
+          <div className="imessage-composer">
+            <button
+              type="button"
+              className="flex h-8 w-8 shrink-0 items-center justify-center text-pool-blue"
+              aria-hidden
+              tabIndex={-1}
+            >
+              <Plus className="h-6 w-6" strokeWidth={2} />
+            </button>
+            <div
+              className={`imessage-input-pill ${composerText ? "imessage-input-pill--active" : ""}`}
+            >
+              {composerText || "iMessage"}
+            </div>
+            <button
+              type="button"
+              className="flex h-8 w-8 shrink-0 items-center justify-center text-pool-blue"
+              aria-hidden
+              tabIndex={-1}
+            >
+              {composerText ? (
+                <span className="flex h-7 w-7 items-center justify-center rounded-full bg-pool-blue text-white">
+                  <ArrowUp className="h-3.5 w-3.5" strokeWidth={2.5} />
+                </span>
+              ) : (
+                <Mic className="h-5 w-5" strokeWidth={2} />
+              )}
+            </button>
+          </div>
+
+          <div className="imessage-home-indicator" aria-hidden />
+        </div>
       </div>
     </div>
   );

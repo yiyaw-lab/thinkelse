@@ -73,6 +73,17 @@
   --radius: 1rem;
   --radius-lg: 1.5rem;
   --radius-xl: 2rem;
+
+  /* Pool.day-inspired palette — pastel lavender */
+  --pool-ink: #334558;
+  --pool-muted: #9198a0;
+  --pool-blue: #b8a6f5;
+  --pool-blue-hover: #a894f0;
+  --pool-lavender-soft: #f0ebff;
+  --pool-lavender-ink: #5e5391;
+  --pool-bg: #faf8ff;
+  --pool-surface: #ffffff;
+  --pool-line: #f1f1f1;
 }
 
 @theme inline {
@@ -99,6 +110,15 @@
   --color-cream-50: var(--cream-50);
   --color-mint-200: var(--mint-200);
   --color-rose-100: var(--rose-100);
+
+  --color-pool-ink: var(--pool-ink);
+  --color-pool-muted: var(--pool-muted);
+  --color-pool-blue: var(--pool-blue);
+  --color-pool-lavender-soft: var(--pool-lavender-soft);
+  --color-pool-lavender-ink: var(--pool-lavender-ink);
+  --color-pool-bg: var(--pool-bg);
+  --color-pool-surface: var(--pool-surface);
+  --color-pool-line: var(--pool-line);
 
   --font-sans: var(--font-body);
   --font-display: var(--font-display);
@@ -184,7 +204,7 @@ h3 {
 }
 
 :focus-visible {
-  outline: 2px solid var(--orchid-500);
+  outline: 2px solid var(--pool-blue);
   outline-offset: 3px;
 }
 
@@ -798,6 +818,455 @@ h3 {
   animation: demo-in 0.45s var(--ease-soft);
 }
 
+/* Pool.day-inspired landing */
+.pool-display {
+  font-family: var(--font-body), system-ui, sans-serif;
+  font-weight: 600;
+  font-size: clamp(3rem, 6.5vw, 5.5rem);
+  line-height: 0.98;
+  letter-spacing: -0.045em;
+  text-wrap: balance;
+  color: var(--pool-ink);
+}
+
+.pool-display-sm {
+  font-family: var(--font-body), system-ui, sans-serif;
+  font-weight: 600;
+  font-size: clamp(2rem, 4vw, 3.25rem);
+  line-height: 1.04;
+  letter-spacing: -0.035em;
+  text-wrap: balance;
+  color: var(--pool-ink);
+}
+
+.pool-lead {
+  font-size: clamp(1.125rem, 1rem + 0.5vw, 1.375rem);
+  line-height: 1.55;
+  color: var(--pool-muted);
+}
+
+.pool-eyebrow {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--pool-muted);
+}
+
+.btn-pool {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: 999px;
+  background: var(--pool-blue);
+  color: #fff;
+  font-weight: 600;
+  padding: 0.875rem 1.75rem;
+  transition:
+    background var(--motion-base) var(--ease-soft),
+    transform var(--motion-base) var(--ease-soft);
+}
+
+.btn-pool:hover {
+  background: var(--pool-blue-hover);
+  box-shadow: 0 8px 24px rgba(184, 166, 245, 0.35);
+}
+
+.btn-pool-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: 999px;
+  border: 1px solid var(--pool-line);
+  background: var(--pool-surface);
+  color: var(--pool-ink);
+  font-weight: 600;
+  padding: 0.75rem 1.5rem;
+  transition: background var(--motion-base) var(--ease-soft);
+}
+
+.btn-pool-secondary:hover {
+  background: var(--pool-bg);
+}
+
+.pool-chip {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  border: 1px solid var(--pool-line);
+  background: var(--pool-surface);
+  padding: 0.4rem 0.9rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--pool-muted);
+}
+
+.pool-card {
+  background: var(--pool-surface);
+  border: 1px solid var(--pool-line);
+  border-radius: 1.25rem;
+  box-shadow: 0 28px 72px rgba(51, 69, 88, 0.1);
+}
+
+.pool-panel {
+  border: 1px solid var(--pool-line);
+  border-radius: 1.25rem;
+  background: var(--pool-surface);
+  padding: 1.75rem;
+}
+
+.pool-marquee-track {
+  display: flex;
+  width: max-content;
+  gap: 2.5rem;
+  animation: pool-marquee 42s linear infinite;
+}
+
+.pool-marquee-item {
+  flex-shrink: 0;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  color: var(--pool-muted);
+  white-space: nowrap;
+}
+
+.pool-marquee-item::after {
+  content: "·";
+  margin-left: 2.5rem;
+  color: var(--pool-line);
+}
+
+.pool-scroll-step {
+  min-height: min(72vh, 640px);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.pool-scroll-step-idle {
+  opacity: 0.38;
+}
+
+.pool-scroll-step-active {
+  opacity: 1;
+}
+
+.pool-scroll-step-active .pool-display-sm {
+  color: var(--pool-ink);
+}
+
+.pool-scroll-step-idle .pool-display-sm {
+  color: var(--pool-muted);
+}
+
+.demo-message-in {
+  animation: demo-message-in 0.4s var(--ease-soft) both;
+}
+
+@keyframes demo-message-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .pool-scroll-step {
+    animation: pool-step-in linear both;
+    animation-timeline: view();
+    animation-range: entry 10% cover 35%;
+  }
+}
+
+@keyframes pool-marquee {
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+@keyframes pool-step-in {
+  from {
+    opacity: 0.25;
+    transform: translateY(28px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes pool-step-in {
+  from {
+    opacity: 0.25;
+    transform: translateY(28px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* iMessage demo */
+.imessage-device {
+  --imessage-blue: #007aff;
+  --imessage-gray: #e9e9eb;
+  --imessage-text: #000000;
+  --imessage-muted: #8e8e93;
+  --imessage-separator: rgba(60, 60, 67, 0.12);
+  --imessage-input-bg: #f2f2f7;
+
+  width: 100%;
+  max-width: 320px;
+  margin-inline: auto;
+  border-radius: 2.25rem;
+  background: #1c1c1e;
+  padding: 3px;
+  box-shadow:
+    0 24px 48px rgba(0, 0, 0, 0.14),
+    0 0 0 1px rgba(255, 255, 255, 0.05) inset;
+}
+
+.imessage-screen {
+  display: flex;
+  overflow: hidden;
+  height: 640px;
+  flex-direction: column;
+  border-radius: 2rem;
+  background: #fff;
+}
+
+.imessage-status-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.65rem 1.35rem 0.25rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--imessage-text);
+  background: #fff;
+}
+
+.imessage-island {
+  width: 96px;
+  height: 28px;
+  border-radius: 999px;
+  background: #000;
+}
+
+.imessage-nav {
+  display: grid;
+  grid-template-columns: 2.5rem 1fr 2.5rem;
+  align-items: center;
+  gap: 0.5rem;
+  border-bottom: 0.5px solid var(--imessage-separator);
+  padding: 0.35rem 0.75rem 0.65rem;
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(12px);
+}
+
+.imessage-nav-contact {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2rem;
+}
+
+.imessage-nav-name {
+  display: flex;
+  align-items: center;
+  gap: 0.15rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--imessage-text);
+}
+
+.imessage-thread {
+  display: flex;
+  min-height: 0;
+  flex: 1;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 0.35rem;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  background: #fff;
+  padding: 0.75rem 0.85rem 0.5rem;
+  scroll-behavior: smooth;
+}
+
+.imessage-row {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+}
+
+.imessage-row--sent {
+  justify-content: flex-end;
+}
+
+.imessage-row--received {
+  justify-content: flex-start;
+}
+
+.imessage-timestamp {
+  margin: 0.5rem auto 0.75rem;
+  flex-shrink: 0;
+  font-size: 0.6875rem;
+  font-weight: 500;
+  color: var(--imessage-muted);
+}
+
+.imessage-bubble-sent {
+  max-width: 78%;
+  min-width: 0;
+  border-radius: 16px;
+  border-bottom-right-radius: 4px;
+  background: var(--imessage-blue);
+  padding: 0.4rem 0.65rem;
+  font-size: 0.875rem;
+  line-height: 1.35;
+  letter-spacing: -0.01em;
+  color: #fff;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.imessage-bubble-received {
+  max-width: 78%;
+  min-width: 0;
+  border-radius: 16px;
+  border-bottom-left-radius: 4px;
+  background: var(--imessage-gray);
+  padding: 0.4rem 0.65rem;
+  font-size: 0.875rem;
+  line-height: 1.35;
+  letter-spacing: -0.01em;
+  color: var(--imessage-text);
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.imessage-bubble-card {
+  max-width: 88%;
+  min-width: 0;
+  width: 100%;
+  border-radius: 16px;
+  background: var(--imessage-gray);
+  padding: 0.35rem;
+}
+
+.imessage-typing {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  border-radius: 18px;
+  border-bottom-left-radius: 4px;
+  background: var(--imessage-gray);
+  padding: 0.7rem 0.85rem;
+}
+
+.imessage-typing-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #8e8e93;
+  animation: imessage-typing 1.2s ease-in-out infinite;
+}
+
+.imessage-quest-card {
+  overflow: hidden;
+  width: 100%;
+  min-width: 0;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 0 0 0.5px rgba(0, 0, 0, 0.08);
+}
+
+.imessage-quest-body {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.imessage-quest-header {
+  border-bottom: 0.5px solid var(--imessage-separator);
+  background: #f7f7f8;
+  padding: 0.45rem 0.7rem;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--imessage-muted);
+}
+
+.imessage-composer {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.55rem;
+  border-top: 0.5px solid var(--imessage-separator);
+  background: #fff;
+  padding: 0.55rem 0.75rem 0.65rem;
+}
+
+.imessage-input-pill {
+  flex: 1;
+  min-width: 0;
+  min-height: 2rem;
+  max-height: 4.5rem;
+  overflow: hidden;
+  border-radius: 999px;
+  border: 0.5px solid rgba(0, 0, 0, 0.08);
+  background: var(--imessage-input-bg);
+  padding: 0.4rem 0.8rem;
+  font-size: 0.875rem;
+  line-height: 1.3;
+  color: var(--imessage-muted);
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.imessage-input-pill--active {
+  color: var(--imessage-text);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.imessage-home-indicator {
+  height: 18px;
+  background: #fff;
+}
+
+.imessage-home-indicator::after {
+  content: "";
+  display: block;
+  width: 108px;
+  height: 4px;
+  margin: 6px auto 0;
+  border-radius: 999px;
+  background: #000;
+}
+
+@keyframes imessage-typing {
+  0%,
+  100% {
+    opacity: 0.35;
+    transform: translateY(0);
+  }
+  50% {
+    opacity: 1;
+    transform: translateY(-2px);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
@@ -827,5 +1296,21 @@ h3 {
   .depth-float,
   .depth-portrait-stack {
     transform: none !important;
+  }
+
+  .pool-marquee-track,
+  .pool-scroll-step,
+  .demo-message-in {
+    animation: none !important;
+    transform: none !important;
+    opacity: 1 !important;
+  }
+
+  .pool-scroll-step-idle {
+    opacity: 1;
+  }
+
+  .imessage-typing-dot {
+    animation: none !important;
   }
 }

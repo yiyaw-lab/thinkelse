@@ -56,7 +56,7 @@ export function ElsyBuddy({ className = "", mood = "curious" }: ElsyBuddyProps) 
         />
 
         <g transform="translate(20, 8)">
-          <ElsyFace blink showStar mood={mood} />
+          <ElsyFace blink showStar mood={mood} variant="pastel" />
         </g>
 
         {!isComforting && (

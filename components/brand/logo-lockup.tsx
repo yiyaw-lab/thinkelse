@@ -16,11 +16,11 @@ export function LogoLockup({
   showSpark = true,
   inverted = false,
 }: LogoLockupProps) {
-  const textClass = inverted ? "text-cream-50" : "text-ink-800";
+  const textClass = inverted ? "text-cream-50" : "text-pool-ink";
 
   return (
     <span className={`inline-flex items-center gap-2.5 ${className}`}>
-      {showSpark && <LogoMark size={markSize} />}
+      {showSpark && <LogoMark size={markSize} framed />}
       {showWordmark && (
         <span
           className={`font-display text-xl font-semibold tracking-tight ${textClass}`}
