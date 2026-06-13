@@ -3,3 +3,7 @@
 .env.*
 **/.env
 **/.env.*
+
+# Private strategy and internal docs
+private/
+**/.private/

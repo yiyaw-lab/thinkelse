@@ -1,4 +1,4 @@
-import { after } from "next/server";
+import { waitUntil } from "@vercel/functions";
 import { NextResponse } from "next/server";
 
 import { generateQuest } from "@/lib/agents/generateQuest";
@@ -156,6 +156,7 @@ export async function POST(request: Request) {
     const publicKey = process.env.TELNYX_PUBLIC_KEY;
 
     if (!publicKey) {
+      console.error("Inbound SMS: missing TELNYX_PUBLIC_KEY");
       return NextResponse.json({ ok: false, error: "Misconfigured" }, { status: 500 });
     }
 
@@ -167,6 +168,7 @@ export async function POST(request: Request) {
     });
 
     if (!isValid) {
+      console.error("Inbound SMS: webhook signature verification failed");
       return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401 });
     }
   }
@@ -190,13 +192,11 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: true });
   }
 
-  after(async () => {
-    try {
-      await handleInboundMessage(from, body);
-    } catch (error) {
+  waitUntil(
+    handleInboundMessage(from, body).catch((error) => {
       console.error("Inbound SMS handler failed:", error);
-    }
-  });
+    }),
+  );
 
   return NextResponse.json({ ok: true });
 }
