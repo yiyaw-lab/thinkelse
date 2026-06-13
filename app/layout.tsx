@@ -1,21 +1,37 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Caveat, Inter, Playfair_Display } from "next/font/google";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const playfair = Playfair_Display({
+  variable: "--font-display",
   subsets: ["latin"],
+  weight: ["500", "600", "700"],
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const inter = Inter({
+  variable: "--font-body",
   subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+});
+
+const caveat = Caveat({
+  variable: "--font-hand",
+  subsets: ["latin"],
+  weight: ["400", "500"],
 });
 
 export const metadata: Metadata = {
-  title: "Else — Curiosity quests for your child",
+  title: "Else — Curiosity changes everything",
   description:
-    "Tiny curiosity quests to help your child think beyond the obvious. Delivered by text, powered by Elsy.",
+    "Raising thoughtful kids in the AI age. Tiny curiosity quests by text — no app, no account.",
+  openGraph: {
+    title: "Else — Curiosity changes everything",
+    description:
+      "Raising thoughtful kids in the AI age. Tiny curiosity quests by text — no app, no account.",
+    url: "https://elsey.app",
+    siteName: "Else",
+    type: "website",
+  },
 };
 
 export default function RootLayout({
@@ -26,7 +42,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${playfair.variable} ${inter.variable} ${caveat.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">{children}</body>
     </html>

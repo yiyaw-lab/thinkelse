@@ -1,3 +1,11 @@
+import { ArrowRight, Eye, HandHeart, ShieldCheck, Sprout } from "lucide-react";
+import { HeroVisual } from "@/components/brand/hero-visual";
+import { ElsyAvatar } from "@/components/brand/elsy-avatar";
+import { LogoLockup } from "@/components/brand/logo-lockup";
+import { PhoneDemo } from "@/components/demo/phone-demo";
+import { QuestShowcase } from "@/components/demo/quest-showcase";
+import { SiteHeader } from "@/components/layout/site-header";
+
 function formatPhoneDisplay(e164: string) {
   const match = e164.match(/^\+1(\d{3})(\d{3})(\d{4})$/);
   if (match) return `+1 (${match[1]}) ${match[2]}-${match[3]}`;
@@ -12,205 +20,296 @@ const PHONE_HREF = telnyxNumber
   ? `sms:${telnyxNumber}&body=HELLO`
   : "sms:+1__________&body=HELLO";
 
+const SHOW_DEPLOY_BADGE = process.env.VERCEL_ENV !== "production";
 const DEPLOY_SHA = process.env.VERCEL_GIT_COMMIT_SHA?.slice(0, 7) ?? "local";
-const DEPLOY_ENV = process.env.VERCEL_ENV ?? "development";
-const IS_LIVE = DEPLOY_ENV === "production";
 
-function DeployBadge({ className = "" }: { className?: string }) {
+const QUEST_FLOW = [
+  {
+    step: "Spark",
+    body: "A beautiful question arrives in your messages each morning.",
+  },
+  {
+    step: "Wonder",
+    body: "Your child sits with why it's interesting — no rush to answer.",
+  },
+  {
+    step: "Quest",
+    body: "A small real-world mission: notice, sketch, listen, or try.",
+  },
+  {
+    step: "Talk",
+    body: "You text back what they found. Elsy meets them with warmth.",
+  },
+  {
+    step: "Reflect",
+    body: "A gentle follow-up stretches the thinking one level deeper.",
+  },
+] as const;
+
+const PILLARS = [
+  {
+    icon: Eye,
+    title: "Beyond the first answer",
+    body: "Quests train kids to notice, question, and think twice.",
+  },
+  {
+    icon: Sprout,
+    title: "Built for real life",
+    body: "Short prompts between school and dinner. Observation beats screen time.",
+  },
+  {
+    icon: HandHeart,
+    title: "Parent in the loop",
+    body: "You relay your child's thinking. Elsy meets them warmly.",
+  },
+  {
+    icon: ShieldCheck,
+    title: "Private by design",
+    body: "No kid accounts, no tracking feeds, no ads.",
+  },
+] as const;
+
+function DeployBadge() {
+  if (!SHOW_DEPLOY_BADGE) return null;
   return (
-    <div
-      className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-medium tabular-nums ${className}`}
-      style={{
-        borderColor: IS_LIVE ? "#bbf7d0" : "#e7e5e4",
-        background: IS_LIVE ? "#f0fdf4" : "#fafaf9",
-        color: IS_LIVE ? "#166534" : "#57534e",
-      }}
-      title={`Environment: ${DEPLOY_ENV} · Build ${DEPLOY_SHA}`}
+    <span className="hidden rounded-full border border-border-soft bg-white/60 px-2.5 py-1 text-[11px] font-medium text-muted sm:inline-flex">
+      {DEPLOY_SHA}
+    </span>
+  );
+}
+
+function PrimaryCta({
+  className = "",
+  inverted = false,
+}: {
+  className?: string;
+  inverted?: boolean;
+}) {
+  return (
+    <a
+      href={PHONE_HREF}
+      className={`btn-primary group flex-col gap-0.5 sm:flex-row sm:gap-2.5 ${
+        inverted ? "bg-white text-ink-800 hover:bg-cream-50 hover:shadow-none" : ""
+      } ${className}`}
     >
-      <span
-        className="h-2 w-2 rounded-full"
-        style={{
-          background: IS_LIVE ? "#22c55e" : "#a8a29e",
-          boxShadow: IS_LIVE ? "0 0 0 3px rgba(34, 197, 94, 0.2)" : undefined,
-        }}
-      />
-      <span>{IS_LIVE ? "Live" : DEPLOY_ENV}</span>
-      <span style={{ color: "#a8a29e" }}>·</span>
-      <span className="font-mono">{DEPLOY_SHA}</span>
-    </div>
+      <span className="flex items-center gap-2 text-base font-semibold">
+        Text HELLO
+        <ArrowRight
+          className="h-4 w-4 transition-transform group-hover:translate-x-0.5"
+          aria-hidden
+        />
+      </span>
+      <span className={`text-sm font-normal ${inverted ? "text-muted" : "text-white/85"}`}>
+        {PHONE_NUMBER}
+      </span>
+    </a>
   );
 }
 
 export default function Home() {
   return (
-    <div className="min-h-screen font-sans" style={{ background: "#fafaf7", color: "#1c1917" }}>
-      <nav className="px-6 py-5 flex items-center justify-between max-w-5xl mx-auto">
-        <span className="text-xl font-semibold tracking-tight">Else</span>
-        <DeployBadge />
-      </nav>
+    <div className="min-h-screen bg-background text-foreground">
+      <a
+        href="#main"
+        className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-xl focus:bg-card focus:px-4 focus:py-2"
+      >
+        Skip to content
+      </a>
 
-      <section className="px-6 pt-16 pb-24 max-w-5xl mx-auto">
-        <div
-          className="inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium mb-8"
-          style={{ background: "#eef4f0", color: "#4d6b56" }}
-        >
-          <span>🌱</span>
-          <span>Text-based curiosity coach for families</span>
-        </div>
+      <SiteHeader phoneHref={PHONE_HREF} deployBadge={<DeployBadge />} />
 
-        <p
-          className="text-sm font-medium tracking-widest uppercase mb-6"
-          style={{ color: "#7c9e87" }}
-        >
-          Meet Elsy
-        </p>
-        <h1 className="text-5xl sm:text-6xl font-semibold leading-[1.05] tracking-tight max-w-2xl mb-8">
-          Tiny curiosity quests for your child.
-        </h1>
-        <p className="text-lg leading-relaxed max-w-xl mb-10" style={{ color: "#57534e" }}>
-          Each day, Elsy sends a playful prompt — something to observe, wonder about, or try in
-          the real world. You share what your child found. Elsy listens, encourages, and goes
-          deeper. All over text.
-        </p>
+      <main id="main">
+        {/* Hero */}
+        <section className="bg-night-wonder star-dust depth-atmosphere relative overflow-hidden px-6 pb-24 pt-12 text-cream-50 sm:pt-20">
+          <div className="depth-bokeh depth-bokeh-1" aria-hidden />
+          <div className="depth-bokeh depth-bokeh-2" aria-hidden />
+          <div className="relative z-10 mx-auto grid max-w-6xl items-center gap-12 lg:grid-cols-[1.1fr_0.9fr]">
+            <div>
+              <p className="t-label mb-6 text-violet-300">Curiosity by text</p>
+              <h1 className="t-hero mb-6 text-cream-50">
+                One question. One quest. Each morning.
+              </h1>
+              <p className="mb-3 max-w-xl text-lg leading-relaxed text-violet-300">
+                Raising thoughtful kids in the AI age.
+              </p>
+              <p className="mb-8 max-w-xl leading-relaxed text-cream-50/80">
+                Elsy sends a beautiful question and a real-world mission to your
+                phone — no app, no kid account, just a few minutes of wonder.
+              </p>
 
-        <div className="flex flex-col sm:flex-row sm:items-center gap-4 mb-6">
-          <a
-            href={PHONE_HREF}
-            className="inline-flex items-center justify-center gap-3 rounded-full px-7 py-4 text-base font-medium text-white transition-opacity hover:opacity-90"
-            style={{ background: "#7c9e87" }}
-          >
-            <span>Text HELLO to {PHONE_NUMBER}</span>
-            <span aria-hidden>→</span>
-          </a>
-          {!telnyxNumber && (
-            <p className="text-sm" style={{ color: "#a8a29e" }}>
-              Set <code className="font-mono text-xs">TELNYX_PHONE_NUMBER</code> to enable texting
-            </p>
-          )}
-        </div>
-
-        <p className="text-sm" style={{ color: "#a8a29e" }}>
-          No app to download. No account to create.
-        </p>
-      </section>
-
-      <section className="px-6 py-24 border-t" style={{ borderColor: "#e7e5e4" }}>
-        <div className="max-w-5xl mx-auto">
-          <h2
-            className="text-sm font-medium tracking-widest uppercase mb-16"
-            style={{ color: "#7c9e87" }}
-          >
-            How it works
-          </h2>
-          <div className="grid sm:grid-cols-3 gap-12">
-            {[
-              {
-                step: "01",
-                title: "Tell Elsy about your child",
-                body: "Name, age, and what they're into. About two minutes over text.",
-              },
-              {
-                step: "02",
-                title: "A quest arrives each day",
-                body: "A prompt, a mission, and a question to sit with — at a time you choose.",
-              },
-              {
-                step: "03",
-                title: "Share what they found",
-                body: "Text back your child's response. Elsy encourages and nudges thinking further.",
-              },
-            ].map(({ step, title, body }) => (
-              <div key={step}>
-                <p
-                  className="text-4xl font-semibold mb-6 tabular-nums"
-                  style={{ color: "#d6d3d1" }}
-                >
-                  {step}
-                </p>
-                <h3 className="text-lg font-semibold mb-3 tracking-tight">{title}</h3>
-                <p className="leading-relaxed" style={{ color: "#57534e" }}>
-                  {body}
-                </p>
+              <div className="flex flex-col items-start gap-5">
+                <PrimaryCta />
+                <ul className="flex flex-wrap gap-2">
+                  {["Ages 5–12", "2-min setup", "iMessage & SMS"].map((item) => (
+                    <li
+                      key={item}
+                      className="chip border-white/20 bg-white/10 text-violet-300"
+                    >
+                      {item}
+                    </li>
+                  ))}
+                </ul>
               </div>
-            ))}
-          </div>
-        </div>
-      </section>
+            </div>
 
-      <section className="px-6 py-24" style={{ background: "#f0f0ec" }}>
-        <div className="max-w-5xl mx-auto grid lg:grid-cols-2 gap-12 items-center">
-          <div>
-            <h2
-              className="text-sm font-medium tracking-widest uppercase mb-6"
-              style={{ color: "#7c9e87" }}
-            >
-              A quest looks like this
-            </h2>
-            <p className="text-2xl font-semibold tracking-tight mb-4">
-              Real prompts. Real observation. Real wondering.
-            </p>
-            <p className="leading-relaxed" style={{ color: "#57534e" }}>
-              Elsy is warm and playful, but the quests are designed to stretch how kids notice the
-              world — not to drill facts.
+            <div className="relative flex items-center justify-center">
+              <HeroVisual />
+            </div>
+          </div>
+        </section>
+
+        {/* Trust */}
+        <section className="bg-soft-morning border-b border-border-soft px-6 py-14">
+          <div className="mx-auto max-w-3xl text-center">
+            <blockquote className="font-display text-xl leading-relaxed text-ink-800 sm:text-2xl">
+              &ldquo;She asked me three more questions at dinner. That never
+              happens.&rdquo;
+            </blockquote>
+            <p className="mt-3 text-sm text-muted">Parent, early family</p>
+            <p className="t-hand mt-8 text-xl text-orchid-500">
+              Our ritual: one question, one quest, one magical moment at a time.
             </p>
           </div>
+        </section>
 
-          <div
-            className="max-w-sm rounded-2xl p-6 shadow-sm lg:ml-auto"
-            style={{ background: "#ffffff", border: "1px solid #e7e5e4" }}
-          >
-            <p className="text-xs font-medium mb-4" style={{ color: "#a8a29e" }}>
-              Elsy · 8:00 AM
-            </p>
-            <p className="font-semibold mb-4">🌱 The Shadow Detective</p>
-            <p className="leading-relaxed mb-5" style={{ color: "#1c1917" }}>
-              Why do shadows change shape throughout the day?
-            </p>
-            <div
-              className="rounded-xl p-4 mb-4 text-sm leading-relaxed"
-              style={{ background: "#fafaf7", color: "#44403c" }}
-            >
-              <p className="font-medium mb-1">Mission</p>
-              <p>
-                Go outside at three different times today and look at your shadow. Does it get
-                longer or shorter?
+        {/* Quest flow */}
+        <section id="how" className="px-6 py-20 sm:py-28">
+          <div className="mx-auto max-w-6xl">
+            <div className="reveal mb-14 max-w-2xl">
+              <p className="t-label mb-3 text-muted">How a quest works</p>
+              <h2 className="t-h2 text-ink-800">From spark to reflection.</h2>
+              <p className="mt-4 leading-relaxed text-muted">
+                Every quest follows the same gentle rhythm — delivered by text,
+                lived in the real world.
               </p>
             </div>
-            <div
-              className="rounded-xl p-4 text-sm leading-relaxed"
-              style={{ background: "#fafaf7", color: "#44403c" }}
-            >
-              <p className="font-medium mb-1">Think about</p>
-              <p>Where do you think your shadow goes at night?</p>
+
+            <ol className="relative grid gap-4 sm:grid-cols-2 lg:grid-cols-5 lg:gap-3">
+              <div
+                className="absolute left-[10%] right-[10%] top-7 hidden h-px bg-border lg:block"
+                aria-hidden
+              />
+              {QUEST_FLOW.map(({ step, body }, i) => (
+                <li key={step} className="reveal relative">
+                  <article className="surface-glass depth-lift relative z-10 h-full rounded-2xl p-5">
+                    <span className="mb-3 flex h-7 w-7 items-center justify-center rounded-full bg-ink-800 text-xs font-semibold text-cream-50">
+                      {i + 1}
+                    </span>
+                    <h3 className="t-h3 mb-2 text-ink-800">{step}</h3>
+                    <p className="text-sm leading-relaxed text-muted">{body}</p>
+                  </article>
+                </li>
+              ))}
+            </ol>
+          </div>
+        </section>
+
+        {/* Messages proof */}
+        <section className="bg-soft-morning px-6 py-20 sm:py-28">
+          <div className="mx-auto grid max-w-6xl items-center gap-12 lg:grid-cols-[1fr_0.9fr] lg:gap-16">
+            <div className="reveal max-w-xl">
+              <p className="t-label mb-3 text-muted">By text</p>
+              <h2 className="t-h2 mb-5 text-ink-800">
+                A thoughtful friend, in the app you already use.
+              </h2>
+              <p className="leading-relaxed text-muted">
+                No dashboard. No streaks. No logins. Elsy handles onboarding,
+                sends the daily quest, and follows up — all in your messages app.
+              </p>
+            </div>
+            <div className="reveal flex justify-center lg:justify-end">
+              <PhoneDemo />
             </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      <section className="px-6 py-28 text-center">
-        <div className="max-w-xl mx-auto">
-          <h2 className="text-4xl font-semibold tracking-tight mb-6">Start thinking else.</h2>
-          <p className="mb-10 leading-relaxed" style={{ color: "#57534e" }}>
-            One text to begin. Elsy handles the rest.
-          </p>
-          <a
-            href={PHONE_HREF}
-            className="inline-flex items-center gap-3 rounded-full px-7 py-4 text-base font-medium text-white transition-opacity hover:opacity-90"
-            style={{ background: "#7c9e87" }}
-          >
-            <span>Text HELLO to {PHONE_NUMBER}</span>
-            <span aria-hidden>→</span>
-          </a>
-        </div>
-      </section>
+        {/* Quests */}
+        <section id="quests" className="px-6 py-20 sm:py-28">
+          <div className="mx-auto max-w-6xl">
+            <div className="reveal mb-12 max-w-2xl">
+              <p className="t-label mb-3 text-muted">Example quests</p>
+              <h2 className="t-h2 mb-4 text-ink-800">
+                Not worksheets. Windows into the world.
+              </h2>
+              <p className="leading-relaxed text-muted">
+                Every quest has a question, a mission outside, and a follow-up
+                that goes one level deeper.
+              </p>
+            </div>
+            <div className="reveal">
+              <QuestShowcase />
+            </div>
+          </div>
+        </section>
 
-      <footer
-        className="px-6 py-8 border-t"
-        style={{ borderColor: "#e7e5e4", color: "#a8a29e" }}
-      >
-        <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-sm">
-          <p>Else · Think beyond the obvious.</p>
-          <DeployBadge />
+        {/* Why Else */}
+        <section id="why" className="bg-soft-morning px-6 py-20 sm:py-28">
+          <div className="mx-auto max-w-6xl">
+            <div className="grid gap-5 lg:grid-cols-4 lg:grid-rows-2">
+              <article className="reveal surface-glass flex flex-col justify-between rounded-2xl bg-rose-100/60 p-8 lg:col-span-2 lg:row-span-2">
+                <p className="t-label text-muted">Why Else</p>
+                <div className="mt-8">
+                  <h2 className="t-h2 mb-4 text-ink-800">Curiosity, not consumption.</h2>
+                  <p className="max-w-md leading-relaxed text-muted">
+                    Most kid products optimize for time-on-screen. Else optimizes
+                    for moments of noticing — the pause before an answer, the
+                    follow-up question, the look when something clicks.
+                  </p>
+                </div>
+              </article>
+
+              {PILLARS.map(({ icon: Icon, title, body }) => (
+                <article key={title} className="reveal surface-glass rounded-2xl p-6">
+                  <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-xl bg-ink-800/5">
+                    <Icon className="h-5 w-5 text-ink-800" strokeWidth={1.75} aria-hidden />
+                  </div>
+                  <h3 className="t-h3 mb-2 text-ink-800">{title}</h3>
+                  <p className="text-sm leading-relaxed text-muted">{body}</p>
+                </article>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* CTA */}
+        <section className="bg-night-wonder star-dust depth-atmosphere relative overflow-hidden px-6 py-24 text-cream-50 sm:py-32">
+          <div className="depth-bokeh depth-bokeh-3" aria-hidden />
+          <div className="relative z-10 mx-auto flex max-w-2xl flex-col items-center text-center">
+            <ElsyAvatar
+              size={112}
+              glow
+              alive
+              depth3d
+              className="reveal mb-4"
+            />
+            <h2 className="t-display reveal mb-6">Try a tiny quest.</h2>
+            <p className="reveal mb-8 max-w-md leading-relaxed text-violet-300">
+              One text to begin. Elsy takes it from there.
+            </p>
+            <div className="reveal">
+              <PrimaryCta inverted />
+            </div>
+          </div>
+        </section>
+      </main>
+
+      <footer className="border-t border-border-soft bg-cream-50 px-6 py-12">
+        <div className="mx-auto flex max-w-6xl flex-col gap-8 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-4">
+            <ElsyAvatar size={56} glow alive depth3d className="shrink-0" />
+            <div>
+              <LogoLockup markSize={24} showSpark={false} />
+              <p className="mt-2 text-sm text-muted">Curiosity changes everything.</p>
+            </div>
+          </div>
+          <div className="flex flex-col gap-2 text-sm text-muted sm:items-end">
+            <a href="mailto:hello@elsey.app" className="hover:text-orchid-500">
+              hello@elsey.app
+            </a>
+            <a href={PHONE_HREF} className="hover:text-orchid-500">
+              {PHONE_NUMBER}
+            </a>
+          </div>
         </div>
       </footer>
     </div>
