@@ -33,6 +33,20 @@ export async function createFamily(phone: string) {
   return data;
 }
 
+export async function getCompleteFamilies() {
+  const { data, error } = await supabaseAdmin
+    .from("families")
+    .select("*")
+    .eq("onboarding_step", "complete");
+
+  if (error) {
+    console.error("getCompleteFamilies error:", error);
+    return [];
+  }
+
+  return data ?? [];
+}
+
 export async function updateFamily(id: string, updates: Record<string, unknown>) {
   const { error } = await supabaseAdmin
     .from("families")

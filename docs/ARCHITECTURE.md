@@ -15,13 +15,13 @@ Else is a text-based family cognition coach.
 - Next.js App Router
 - TypeScript
 - Supabase
-- Twilio SMS
+- Telnyx SMS
 - OpenAI API
 - Vercel
 
 ## Core Folders
 
-- `app/api/sms/inbound` — Twilio inbound webhook
+- `app/api/sms/inbound` — Telnyx inbound webhook
 - `app/api/health` — health check route
 - `lib/supabaseAdmin.ts` — server-side Supabase client
 - `lib/onboarding.ts` — onboarding state machine

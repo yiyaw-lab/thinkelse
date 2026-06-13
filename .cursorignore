@@ -1,0 +1,5 @@
+# Environment files — never read or index
+.env
+.env.*
+**/.env
+**/.env.*

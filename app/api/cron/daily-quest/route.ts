@@ -1,0 +1,93 @@
+import { NextResponse } from "next/server";
+
+import { generateQuest } from "@/lib/agents/generateQuest";
+import { getCompleteFamilies } from "@/lib/db/families";
+import { getFirstChildForFamily } from "@/lib/db/children";
+import { createQuest } from "@/lib/db/quests";
+import { sendSms } from "@/lib/telnyx/sendSms";
+
+// Parse a preferred_time string like "8am", "8:30am", "6pm", "6:30pm" into a 24-hour integer (0–23).
+// Returns null if unparseable.
+function parsePreferredHour(preferredTime: string): number | null {
+  const match = preferredTime
+    .trim()
+    .toLowerCase()
+    .match(/^(\d{1,2})(?::(\d{2}))?\s*(am|pm)$/);
+
+  if (!match) return null;
+
+  let hour = parseInt(match[1], 10);
+  const period = match[3];
+
+  if (period === "am") {
+    if (hour === 12) hour = 0;
+  } else {
+    if (hour !== 12) hour += 12;
+  }
+
+  return hour;
+}
+
+function formatQuest(quest: {
+  title: string;
+  prompt: string;
+  mission: string;
+  followUp: string;
+}) {
+  return `🌱 ${quest.title}
+
+${quest.prompt}
+
+Mission:
+${quest.mission}
+
+Think about:
+${quest.followUp}`;
+}
+
+export async function GET(request: Request) {
+  // Verify the request comes from Vercel's cron system in production
+  const authHeader = request.headers.get("authorization");
+  if (
+    process.env.NODE_ENV === "production" &&
+    authHeader !== `Bearer ${process.env.CRON_SECRET}`
+  ) {
+    return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401 });
+  }
+
+  const currentHour = new Date().getUTCHours();
+  const families = await getCompleteFamilies();
+
+  const results: { phone: string; status: string }[] = [];
+
+  for (const family of families) {
+    if (!family.preferred_time || !family.phone) continue;
+
+    const preferredHour = parsePreferredHour(family.preferred_time);
+
+    if (preferredHour === null || preferredHour !== currentHour) continue;
+
+    const child = await getFirstChildForFamily(family.id);
+    if (!child) continue;
+
+    const generatedQuest = await generateQuest({
+      childName: child.name,
+      age: child.age,
+      interests: child.interests,
+    });
+
+    await createQuest({
+      childId: child.id,
+      prompt: generatedQuest.prompt,
+      mission: generatedQuest.mission,
+      followUp: generatedQuest.followUp,
+      skill: generatedQuest.skill,
+    });
+
+    await sendSms(family.phone, formatQuest(generatedQuest));
+
+    results.push({ phone: family.phone, status: "sent" });
+  }
+
+  return NextResponse.json({ ok: true, sent: results.length, results });
+}

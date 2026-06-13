@@ -1,36 +1,99 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Else
 
-## Getting Started
+Else is a text-based family curiosity coach. Parents text **Elsy** — a warm, intellectually playful AI companion — and Elsy sends personalized daily curiosity quests designed to help children think beyond the obvious.
 
-First, run the development server:
+## Mission
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+Help parents raise thoughtful children in the AI age, one tiny curiosity quest at a time.
+
+## How it works
+
+1. A parent texts the Else number to get started
+2. Elsy onboards the family — learning the child's name, age, and interests
+3. Elsy sends a personalized curiosity quest every day at a preferred time
+4. The parent shares their child's response via SMS
+5. Elsy interprets the response, offers a warm follow-up, and grows with the child
+
+## Stack
+
+| Layer | Tech |
+|---|---|
+| Framework | Next.js (App Router, TypeScript) |
+| Database | Supabase (PostgreSQL) |
+| SMS | Telnyx |
+| AI | OpenAI (GPT-4.1 mini) |
+| Hosting | Vercel |
+
+## Architecture
+
+Routes stay thin. Intelligence lives in `lib/agents`. Database operations live in `lib/db`. External service logic is isolated in service-specific helpers.
+
+```
+app/
+  api/
+    sms/inbound/      — Telnyx webhook, orchestrates all SMS logic
+    cron/daily-quest/ — Vercel cron for scheduled quest delivery
+    health/           — Health check
+lib/
+  agents/             — AI reasoning (quest generation, response interpretation)
+  db/                 — Database helpers (families, children, quests)
+  telnyx/             — Telnyx client, outbound SMS
+  onboarding.ts       — Onboarding state machine
+docs/
+  ARCHITECTURE.md     — Architecture decisions
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Data model
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```
+families  ──→  children  ──→  quests
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- **families** — phone, parent name, preferred quest time, onboarding step
+- **children** — name, age, interests (linked to a family)
+- **quests** — prompt, mission, follow-up, skill, child response (linked to a child)
 
-## Learn More
+## Local development
 
-To learn more about Next.js, take a look at the following resources:
+### Prerequisites
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- Node.js 18+
+- A [Supabase](https://supabase.com) project with the schema applied
+- A [Telnyx](https://telnyx.com) account with an SMS-capable number on a messaging profile
+- An [OpenAI](https://platform.openai.com) API key
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### Environment variables
 
-## Deploy on Vercel
+Create a `.env.local` file:
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```bash
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+OPENAI_API_KEY=sk-...
+
+TELNYX_API_KEY=KEYxxxxxxxx
+TELNYX_PHONE_NUMBER=+1xxxxxxxxxx
+TELNYX_PUBLIC_KEY=your-base64-public-key
+```
+
+`TELNYX_PHONE_NUMBER` must be E.164 format (e.g. `+14155551234`).
+
+### Telnyx setup
+
+1. In the [Telnyx Portal](https://portal.telnyx.com), go to **Messaging** → **Messaging Profiles** and create a profile (or use an existing one).
+2. Assign your purchased number to that messaging profile.
+3. Set the profile **Webhook URL** to your app's inbound endpoint:
+   - Production: `https://your-app.vercel.app/api/sms/inbound`
+   - Local dev: use [ngrok](https://ngrok.com) and point at `https://your-ngrok-subdomain.ngrok.io/api/sms/inbound`
+4. Copy your API key from **API Keys** in the portal.
+5. Copy your **Public Key** from **Keys & Credentials → Public Key** (required in production for webhook signature verification).
+
+## API routes
+
+| Route | Method | Description |
+|---|---|---|
+| `/api/sms/inbound` | POST | Telnyx webhook — handles all inbound SMS |
+| `/api/cron/daily-quest` | GET | Sends daily quests to families at their preferred time |
+| `/api/health` | GET | Health check |
+| `/api/test-quest` | GET | Generate a sample quest (local dev only) |
