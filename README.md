@@ -84,7 +84,7 @@ TELNYX_PUBLIC_KEY=your-base64-public-key
 1. In the [Telnyx Portal](https://portal.telnyx.com), go to **Messaging** → **Messaging Profiles** and create a profile (or use an existing one).
 2. Assign your purchased number to that messaging profile.
 3. Set the profile **Webhook URL** to your app's inbound endpoint:
-   - Production: `https://your-app.vercel.app/api/sms/inbound`
+   - Production: `https://elsey.app/api/sms/inbound`
    - Local dev: use [ngrok](https://ngrok.com) and point at `https://your-ngrok-subdomain.ngrok.io/api/sms/inbound`
 4. Copy your API key from **API Keys** in the portal.
 5. Copy your **Public Key** from **Keys & Credentials → Public Key** (required in production for webhook signature verification).
@@ -94,7 +94,7 @@ TELNYX_PUBLIC_KEY=your-base64-public-key
 Vercel Hobby only allows **one cron per day**, but Else checks preferred times hourly. Use an external scheduler (e.g. [cron-job.org](https://cron-job.org)) to `GET` your cron endpoint every hour:
 
 ```
-https://your-app.vercel.app/api/cron/daily-quest
+https://elsey.app/api/cron/daily-quest
 Authorization: Bearer YOUR_CRON_SECRET
 ```
 
