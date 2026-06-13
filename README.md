@@ -79,6 +79,22 @@ TELNYX_PUBLIC_KEY=your-base64-public-key
 
 `TELNYX_PHONE_NUMBER` must be E.164 format (e.g. `+14155551234`).
 
+### Supabase GitHub integration
+
+Schema lives in `supabase/migrations/`. To connect Supabase to this repo:
+
+1. **Working directory:** `.` (repo root)
+2. **Migration path:** `supabase/migrations`
+3. **Branch:** `main`
+
+If your Supabase project **already has these tables**, mark the initial migration as applied before enabling auto-deploy:
+
+```bash
+npx supabase login
+npx supabase link --project-ref YOUR_PROJECT_REF
+npx supabase migration repair --status applied 20250613120000
+```
+
 ### Telnyx setup
 
 1. In the [Telnyx Portal](https://portal.telnyx.com), go to **Messaging** → **Messaging Profiles** and create a profile (or use an existing one).
