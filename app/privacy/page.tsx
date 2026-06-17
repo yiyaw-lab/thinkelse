@@ -16,7 +16,7 @@ export default function PrivacyPage() {
           <Link href="/" className="text-sm font-semibold text-pool-ink hover:text-pool-blue">
             ← Else
           </Link>
-          <p className="text-xs text-pool-muted">Last updated June 13, 2026</p>
+          <p className="text-xs text-pool-muted">Last updated June 14, 2026</p>
         </div>
       </header>
 
@@ -49,13 +49,33 @@ export default function PrivacyPage() {
           </section>
 
           <section>
-            <h2 className="mb-2 text-base font-semibold">How we use it</h2>
-            <p className="text-pool-muted">
-              We use this information to onboard your family, deliver daily quests,
-              personalize Elsy&rsquo;s replies, improve the service, and comply with
-              legal obligations. We do not sell your personal information. We do not
-              run advertising in SMS or on behalf of third parties.
+            <h2 className="mb-2 text-base font-semibold">SMS &amp; mobile information (10DLC)</h2>
+            <p className="mb-3 text-pool-muted">
+              This section describes how Else handles mobile phone numbers, SMS
+              opt-in data, and messaging consent.
             </p>
+            <ul className="list-disc space-y-2 pl-5 text-pool-muted">
+              <li>
+                <strong>No marketing sharing:</strong> We will not sell, rent, or
+                share your mobile phone number, SMS opt-in data, or messaging
+                consent status with third parties or affiliates for their
+                marketing or promotional purposes.
+              </li>
+              <li>
+                <strong>Service providers only:</strong> We may share personal
+                data, including your phone number and SMS opt-in or consent
+                status, with vendors that help us operate the Else messaging
+                program (for example, SMS carriers, delivery platforms, hosting,
+                database, and AI processing providers). Those vendors may use the
+                data only to provide services to Else — not for their own
+                marketing.
+              </li>
+              <li>
+                <strong>No purchase of lists:</strong> We do not buy lists of
+                phone numbers and do not send messages to anyone who has not
+                opted in.
+              </li>
+            </ul>
           </section>
 
           <section>
@@ -67,6 +87,21 @@ export default function PrivacyPage() {
               frequency varies (typically 1–3 messages per day). Message and data rates
               may apply. Reply <strong>STOP</strong> to cancel. Reply{" "}
               <strong>HELP</strong> for help. Consent is not a condition of purchase.
+              See our{" "}
+              <Link href="/terms" className="text-pool-blue hover:underline">
+                Terms of Service
+              </Link>
+              .
+            </p>
+          </section>
+
+          <section>
+            <h2 className="mb-2 text-base font-semibold">How we use information</h2>
+            <p className="text-pool-muted">
+              We use this information to onboard your family, deliver daily quests,
+              personalize Elsy&rsquo;s replies, improve the service, and comply with
+              legal obligations. We do not sell your personal information. We do not
+              run advertising in SMS or on behalf of third parties.
             </p>
           </section>
 
@@ -74,8 +109,10 @@ export default function PrivacyPage() {
             <h2 className="mb-2 text-base font-semibold">Service providers</h2>
             <p className="text-pool-muted">
               We use trusted providers to operate Else (e.g. SMS delivery, hosting,
-              database, and AI processing). They may process data only to provide
-              services to us and under appropriate safeguards.
+              database, and AI processing). They process data only to provide
+              services to us under contractual safeguards and not for their own
+              marketing. This does not override the SMS non-sharing commitments in
+              the section above.
             </p>
           </section>
 
