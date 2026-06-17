@@ -74,10 +74,13 @@ OPENAI_API_KEY=sk-...
 
 TELNYX_API_KEY=KEYxxxxxxxx
 TELNYX_PHONE_NUMBER=+1xxxxxxxxxx
+TELNYX_MESSAGING_PROFILE_ID=your-messaging-profile-uuid
 TELNYX_PUBLIC_KEY=your-base64-public-key
 ```
 
 `TELNYX_PHONE_NUMBER` must be E.164 format (e.g. `+14155551234`).
+
+`TELNYX_MESSAGING_PROFILE_ID` is the UUID from **Messaging → Messaging Profiles** in the Telnyx portal (same profile your number is assigned to).
 
 ### Supabase GitHub integration
 
@@ -104,6 +107,10 @@ npx supabase migration repair --status applied 20250613120000
    - Local dev: use [ngrok](https://ngrok.com) and point at `https://your-ngrok-subdomain.ngrok.io/api/sms/inbound`
 4. Copy your API key from **API Keys** in the portal.
 5. Copy your **Public Key** from **Keys & Credentials → Public Key** (required in production for webhook signature verification).
+6. Copy the **Messaging Profile ID** (UUID) into `TELNYX_MESSAGING_PROFILE_ID`.
+7. After **10DLC brand + campaign** are approved, assign your number to the campaign:
+   - Portal: **Messaging → 10DLC → Campaigns** → your campaign → **Assign Numbers**
+   - Inbound can work before this step; **outbound US A2P will fail** until the number is linked.
 
 ### Daily quest cron (Hobby / free Vercel)
 

@@ -145,7 +145,8 @@ ${generatedQuest.followUp}`;
   }
 
   if (replyText) {
-    await sendSms(from, replyText);
+    const sent = await sendSms(from, replyText);
+    console.info("Outbound SMS queued:", { to: from, messageId: sent.id });
   }
 }
 
@@ -194,7 +195,8 @@ export async function POST(request: Request) {
 
   waitUntil(
     handleInboundMessage(from, body).catch((error) => {
-      console.error("Inbound SMS handler failed:", error);
+      const message = error instanceof Error ? error.message : String(error);
+      console.error("Inbound SMS handler failed:", message);
     }),
   );
 

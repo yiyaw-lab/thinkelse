@@ -16,6 +16,7 @@ export async function GET() {
     config: {
       telnyxApiKey: Boolean(process.env.TELNYX_API_KEY),
       telnyxPhoneNumber: Boolean(process.env.TELNYX_PHONE_NUMBER),
+      telnyxMessagingProfileId: Boolean(process.env.TELNYX_MESSAGING_PROFILE_ID),
       telnyxPublicKey: Boolean(publicKey),
       telnyxPublicKeyBytes: publicKey ? getPublicKeyByteLength(publicKey) : null,
       supabaseUrl: Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL),

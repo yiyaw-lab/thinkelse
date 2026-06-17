@@ -235,6 +235,16 @@ export default function Home() {
                   Why Else
                 </a>
               </li>
+              <li>
+                <a href="/privacy" className="hover:text-pool-blue">
+                  Privacy
+                </a>
+              </li>
+              <li>
+                <a href="/terms" className="hover:text-pool-blue">
+                  Terms
+                </a>
+              </li>
             </ul>
           </div>
 
