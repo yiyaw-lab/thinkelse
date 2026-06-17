@@ -1,4 +1,5 @@
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
+import { formatLocalDateKey } from "@/lib/timezone";
 
 export type QuestReviewStatus = "pending" | "approved" | "flagged" | "skipped";
 
@@ -9,7 +10,7 @@ export async function getLatestQuestForChild(childId: string) {
     .eq("child_id", childId)
     .order("created_at", { ascending: false })
     .limit(1)
-    .single();
+    .maybeSingle();
 
   if (error) {
     console.error("getLatestQuestForChild error:", error);
@@ -17,6 +18,31 @@ export async function getLatestQuestForChild(childId: string) {
   }
 
   return data;
+}
+
+export async function hasQuestOnLocalDay(
+  childId: string,
+  localDateKey: string,
+  timezone: string,
+) {
+  const { data, error } = await supabaseAdmin
+    .from("quests")
+    .select("created_at")
+    .eq("child_id", childId)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (error || !data?.created_at) {
+    return false;
+  }
+
+  const questDateKey = formatLocalDateKey(
+    timezone,
+    new Date(data.created_at as string),
+  );
+
+  return questDateKey === localDateKey;
 }
 
 export async function getRecentQuestsForChild(childId: string, limit = 8) {

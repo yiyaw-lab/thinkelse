@@ -23,6 +23,7 @@ export async function createFamily(phone: string) {
     .insert({
       phone,
       onboarding_step: "parent_name",
+      sms_opted_in: true,
     })
     .select()
     .single();
@@ -39,7 +40,8 @@ export async function getCompleteFamilies() {
   const { data, error } = await supabaseAdmin
     .from("families")
     .select("*")
-    .eq("onboarding_step", "complete");
+    .eq("onboarding_step", "complete")
+    .eq("sms_opted_in", true);
 
   if (error) {
     console.error("getCompleteFamilies error:", error);

@@ -49,7 +49,7 @@ docs/
 families  ──→  children  ──→  quests
 ```
 
-- **families** — phone, parent name, preferred quest time, onboarding step
+- **families** — phone, parent name, preferred quest time, timezone, SMS opt-in status, onboarding step
 - **children** — name, age, interests (linked to a family)
 - **quests** — prompt, mission, follow-up, skill, child response (linked to a child)
 
@@ -125,6 +125,8 @@ Authorization: Bearer YOUR_CRON_SECRET
 
 Quests from the first 50 families are flagged `review_status: pending` for human QA.
 
+**Web UI:** [https://elsey.app/admin/review](https://elsey.app/admin/review) (enter `ADMIN_SECRET`)
+
 ```bash
 # List pending quests
 curl -H "Authorization: Bearer YOUR_ADMIN_SECRET" https://elsey.app/api/admin/review-queue
@@ -138,6 +140,21 @@ curl -X PATCH https://elsey.app/api/admin/review-queue \
 
 Uses `ADMIN_SECRET` if set, otherwise falls back to `CRON_SECRET`.
 
+### SMS compliance keywords
+
+Inbound SMS handles standard keywords before quest logic:
+
+- **STOP** (also STOPALL, UNSUBSCRIBE, CANCEL, END, QUIT) — opts out and confirms
+- **HELP** (also INFO) — sends program help text
+- **START** (also UNSTOP, YES) — re-subscribes opted-out families
+- **HELLO** — re-subscribes if opted out; otherwise treated as onboarding for new numbers
+
+### Timezone-aware daily quests
+
+Onboarding now asks for US timezone after preferred send time. The hourly cron matches each family's **local hour** (not UTC) and skips families who already received a quest that local day.
+
+Apply migration `20250613160000_sms_opt_in_and_timezone.sql` in Supabase if not auto-deployed.
+
 ## API routes
 
 | Route | Method | Description |
@@ -148,3 +165,4 @@ Uses `ADMIN_SECRET` if set, otherwise falls back to `CRON_SECRET`.
 | `/api/test-quest` | GET | Generate a sample quest (local dev only) |
 | `/api/test-interpret` | GET | Generate a sample Elsy reply (local dev only) |
 | `/api/admin/review-queue` | GET, PATCH | Human review queue for first 50 families |
+| `/admin/review` | GET | Web UI for quest review queue |

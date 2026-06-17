@@ -7,7 +7,7 @@ import {
   buildInterpretContext,
   buildQuestContext,
 } from "@/lib/agents/build-family-context";
-import { getOnboardingReply } from "@/lib/onboarding";
+import { getOnboardingReply, invalidTimezoneReply } from "@/lib/onboarding";
 import {
   createFamily,
   findFamilyByPhone,
@@ -25,6 +25,7 @@ import {
   updateQuestResponse,
 } from "@/lib/db/quests";
 import { reviewStatusForFamily } from "@/lib/quests/review-policy";
+import { handleSmsKeyword } from "@/lib/sms/handle-keyword";
 import { sendSms } from "@/lib/telnyx/sendSms";
 import {
   formatInterpretationMessage,
@@ -34,6 +35,7 @@ import {
   shouldVerifyTelnyxWebhook,
   verifyTelnyxWebhookSignature,
 } from "@/lib/telnyx/verifyWebhook";
+import { parseTimezoneInput } from "@/lib/timezone";
 
 type TelnyxInboundWebhook = {
   data?: {
@@ -45,8 +47,51 @@ type TelnyxInboundWebhook = {
   };
 };
 
+async function completeOnboardingWithQuest(
+  family: NonNullable<Awaited<ReturnType<typeof findFamilyByPhone>>>,
+  replyPrefix: string,
+) {
+  const child = await getFirstChildForFamily(family.id);
+
+  if (!child) {
+    return replyPrefix;
+  }
+
+  const questContext = await buildQuestContext(family, child);
+  const generatedQuest = await generateQuest(questContext);
+  const reviewStatus = await reviewStatusForFamily(family.id);
+
+  await createQuest({
+    childId: child.id,
+    title: generatedQuest.title,
+    prompt: generatedQuest.prompt,
+    mission: generatedQuest.mission,
+    followUp: generatedQuest.followUp,
+    skill: generatedQuest.skill,
+    reviewStatus,
+  });
+
+  return `${replyPrefix}
+
+${formatQuestMessage(generatedQuest)}`;
+}
+
 async function handleInboundMessage(from: string, body: string) {
-  const existingFamily = await findFamilyByPhone(from);
+  let existingFamily = await findFamilyByPhone(from);
+  const keywordResult = await handleSmsKeyword(body, existingFamily);
+
+  if (keywordResult.handled) {
+    if (keywordResult.reply) {
+      const sent = await sendSms(from, keywordResult.reply);
+      console.info("Outbound SMS queued:", { to: from, messageId: sent.id });
+    }
+
+    if (keywordResult.stopProcessing) {
+      return;
+    }
+
+    existingFamily = await findFamilyByPhone(from);
+  }
 
   let replyText = "";
 
@@ -101,42 +146,38 @@ async function handleInboundMessage(from: string, body: string) {
         });
       }
 
-      const onboarding = getOnboardingReply(currentStep, body);
+      if (currentStep === "timezone") {
+        const timezone = parseTimezoneInput(body);
 
-      await updateFamily(existingFamily.id, {
-        onboarding_step: onboarding.nextStep,
-        parent_name:
-          currentStep === "parent_name" ? body : existingFamily.parent_name,
-        preferred_time:
-          currentStep === "preferred_time"
-            ? body
-            : existingFamily.preferred_time,
-      });
-
-      replyText = onboarding.reply;
-
-      if (onboarding.nextStep === "complete") {
-        const child = await getFirstChildForFamily(existingFamily.id);
-
-        if (child) {
-          const questContext = await buildQuestContext(existingFamily, child);
-          const generatedQuest = await generateQuest(questContext);
-          const reviewStatus = await reviewStatusForFamily(existingFamily.id);
-
-          await createQuest({
-            childId: child.id,
-            title: generatedQuest.title,
-            prompt: generatedQuest.prompt,
-            mission: generatedQuest.mission,
-            followUp: generatedQuest.followUp,
-            skill: generatedQuest.skill,
-            reviewStatus,
+        if (!timezone) {
+          replyText = invalidTimezoneReply();
+        } else {
+          await updateFamily(existingFamily.id, {
+            timezone,
+            onboarding_step: "complete",
+            parent_name: existingFamily.parent_name,
+            preferred_time: existingFamily.preferred_time,
           });
 
-          replyText += `
-
-${formatQuestMessage(generatedQuest)}`;
+          replyText = await completeOnboardingWithQuest(
+            { ...existingFamily, timezone, onboarding_step: "complete" },
+            getOnboardingReply("timezone", body).reply,
+          );
         }
+      } else {
+        const onboarding = getOnboardingReply(currentStep, body);
+
+        await updateFamily(existingFamily.id, {
+          onboarding_step: onboarding.nextStep,
+          parent_name:
+            currentStep === "parent_name" ? body : existingFamily.parent_name,
+          preferred_time:
+            currentStep === "preferred_time"
+              ? body
+              : existingFamily.preferred_time,
+        });
+
+        replyText = onboarding.reply;
       }
     }
   }

@@ -1,0 +1,95 @@
+import { updateFamily } from "@/lib/db/families";
+import {
+  getHelpMessage,
+  getAlreadySubscribedMessage,
+  getStartConfirmation,
+  getStopConfirmation,
+  isHelloKeyword,
+  isHelpKeyword,
+  isStartKeyword,
+  isStopKeyword,
+} from "@/lib/sms/keywords";
+
+type FamilyRow = {
+  id: string;
+  sms_opted_in?: boolean | null;
+  onboarding_step?: string | null;
+};
+
+export type KeywordResult =
+  | { handled: true; reply: string; stopProcessing: true }
+  | { handled: true; reply: string; stopProcessing: false }
+  | { handled: false };
+
+export async function handleSmsKeyword(
+  body: string,
+  family: FamilyRow | null,
+): Promise<KeywordResult> {
+  if (isStopKeyword(body)) {
+    if (family) {
+      await updateFamily(family.id, { sms_opted_in: false });
+    }
+
+    return {
+      handled: true,
+      reply: getStopConfirmation(),
+      stopProcessing: true,
+    };
+  }
+
+  if (isHelpKeyword(body)) {
+    return {
+      handled: true,
+      reply: getHelpMessage(),
+      stopProcessing: true,
+    };
+  }
+
+  if (isStartKeyword(body)) {
+    if (!family) {
+      return { handled: false };
+    }
+
+    if (family.sms_opted_in === false) {
+      await updateFamily(family.id, { sms_opted_in: true });
+      return {
+        handled: true,
+        reply: getStartConfirmation(),
+        stopProcessing: true,
+      };
+    }
+
+    return {
+      handled: true,
+      reply: getAlreadySubscribedMessage(),
+      stopProcessing: true,
+    };
+  }
+
+  if (isHelloKeyword(body) && family?.sms_opted_in === false) {
+    await updateFamily(family.id, { sms_opted_in: true });
+    return {
+      handled: true,
+      reply: getStartConfirmation(),
+      stopProcessing: true,
+    };
+  }
+
+  if (isHelloKeyword(body) && family && family.onboarding_step === "complete") {
+    return {
+      handled: true,
+      reply: getAlreadySubscribedMessage(),
+      stopProcessing: true,
+    };
+  }
+
+  if (family?.sms_opted_in === false) {
+    return {
+      handled: true,
+      reply: `You're unsubscribed from Else SMS. Reply START to rejoin, or HELP for support.`,
+      stopProcessing: true,
+    };
+  }
+
+  return { handled: false };
+}

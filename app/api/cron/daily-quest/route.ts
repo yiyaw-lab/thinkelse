@@ -4,10 +4,11 @@ import { generateQuest } from "@/lib/agents/generateQuest";
 import { buildQuestContext } from "@/lib/agents/build-family-context";
 import { getCompleteFamilies } from "@/lib/db/families";
 import { getFirstChildForFamily } from "@/lib/db/children";
-import { createQuest } from "@/lib/db/quests";
+import { createQuest, hasQuestOnLocalDay } from "@/lib/db/quests";
 import { reviewStatusForFamily } from "@/lib/quests/review-policy";
 import { formatQuestMessage } from "@/lib/sms/format-quest";
 import { sendSms } from "@/lib/telnyx/sendSms";
+import { DEFAULT_TIMEZONE, formatLocalDateKey, getLocalHour } from "@/lib/timezone";
 
 // Parse a preferred_time string like "8am", "8:30am", "6pm", "6:30pm" into a 24-hour integer (0–23).
 // Returns null if unparseable.
@@ -41,7 +42,7 @@ export async function GET(request: Request) {
     return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401 });
   }
 
-  const currentHour = new Date().getUTCHours();
+  const now = new Date();
   const families = await getCompleteFamilies();
 
   const results: { phone: string; status: string }[] = [];
@@ -49,12 +50,29 @@ export async function GET(request: Request) {
   for (const family of families) {
     if (!family.preferred_time || !family.phone) continue;
 
+    const timezone =
+      typeof family.timezone === "string" && family.timezone
+        ? family.timezone
+        : DEFAULT_TIMEZONE;
     const preferredHour = parsePreferredHour(family.preferred_time);
+    const localHour = getLocalHour(timezone, now);
 
-    if (preferredHour === null || preferredHour !== currentHour) continue;
+    if (preferredHour === null || preferredHour !== localHour) continue;
 
     const child = await getFirstChildForFamily(family.id);
     if (!child) continue;
+
+    const localDateKey = formatLocalDateKey(timezone, now);
+    const alreadySentToday = await hasQuestOnLocalDay(
+      child.id,
+      localDateKey,
+      timezone,
+    );
+
+    if (alreadySentToday) {
+      results.push({ phone: family.phone, status: "skipped_already_sent" });
+      continue;
+    }
 
     const questContext = await buildQuestContext(family, child);
     const generatedQuest = await generateQuest(questContext);
@@ -75,5 +93,9 @@ export async function GET(request: Request) {
     results.push({ phone: family.phone, status: "sent" });
   }
 
-  return NextResponse.json({ ok: true, sent: results.length, results });
+  return NextResponse.json({
+    ok: true,
+    sent: results.filter((result) => result.status === "sent").length,
+    results,
+  });
 }
