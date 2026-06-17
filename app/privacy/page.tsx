@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { pageMetadata } from "@/lib/site";
 
-export const metadata: Metadata = {
-  title: "Privacy Policy — Else",
-  description: "How Else handles your family's information.",
-};
+export const metadata: Metadata = pageMetadata({
+  title: "Privacy Policy",
+  description: "How Else handles your family's information and SMS program.",
+  path: "/privacy",
+});
 
 export default function PrivacyPage() {
   return (

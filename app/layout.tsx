@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { Caveat, Inter, Playfair_Display } from "next/font/google";
 import "./globals.css";
 
+import { rootMetadata, SITE } from "@/lib/site";
+
 const playfair = Playfair_Display({
   variable: "--font-display",
   subsets: ["latin"],
@@ -21,17 +23,30 @@ const caveat = Caveat({
 });
 
 export const metadata: Metadata = {
-  title: "Else — Curiosity changes everything",
-  description:
-    "Raising thoughtful kids in the AI age. Tiny curiosity quests by text — no app, no account.",
-  openGraph: {
-    title: "Else — Curiosity changes everything",
-    description:
-      "Raising thoughtful kids in the AI age. Tiny curiosity quests by text — no app, no account.",
-    url: "https://elsey.app",
-    siteName: "Else",
-    type: "website",
+  ...rootMetadata,
+  icons: {
+    icon: [{ url: "/icon", type: "image/png" }],
+    apple: [{ url: "/apple-icon", type: "image/png" }],
   },
+  appleWebApp: {
+    capable: true,
+    title: SITE.name,
+    statusBarStyle: "default",
+  },
+  formatDetection: {
+    telephone: true,
+    email: true,
+  },
+};
+
+export const viewport = {
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: SITE.themeColor },
+    { media: "(prefers-color-scheme: dark)", color: "#5e5391" },
+  ],
+  colorScheme: "light",
+  width: "device-width",
+  initialScale: 1,
 };
 
 export default function RootLayout({

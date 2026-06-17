@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { pageMetadata } from "@/lib/site";
 
-export const metadata: Metadata = {
-  title: "Terms of Service — Else",
-  description: "Terms for using Else by SMS.",
-};
+export const metadata: Metadata = pageMetadata({
+  title: "Terms of Service",
+  description: "Terms for using Else by SMS, including opt-in and messaging.",
+  path: "/terms",
+});
 
 export default function TermsPage() {
   return (

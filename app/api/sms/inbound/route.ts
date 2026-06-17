@@ -3,6 +3,10 @@ import { NextResponse } from "next/server";
 
 import { generateQuest } from "@/lib/agents/generateQuest";
 import { interpretResponse } from "@/lib/agents/interpretResponse";
+import {
+  buildInterpretContext,
+  buildQuestContext,
+} from "@/lib/agents/build-family-context";
 import { getOnboardingReply } from "@/lib/onboarding";
 import {
   createFamily,
@@ -20,6 +24,10 @@ import {
   updateQuestResponse,
 } from "@/lib/db/quests";
 import { sendSms } from "@/lib/telnyx/sendSms";
+import {
+  formatInterpretationMessage,
+  formatQuestMessage,
+} from "@/lib/sms/format-quest";
 import {
   shouldVerifyTelnyxWebhook,
   verifyTelnyxWebhookSignature,
@@ -57,17 +65,11 @@ async function handleInboundMessage(from: string, body: string) {
         if (latestQuest) {
           await updateQuestResponse(latestQuest.id, body);
 
-          const interpretation = await interpretResponse({
-            childName: child.name,
-            age: child.age,
-            questPrompt: latestQuest.prompt,
-            questFollowUp: latestQuest.follow_up ?? "",
-            childResponse: body,
-          });
+          const interpretation = await interpretResponse(
+            await buildInterpretContext(existingFamily, child, latestQuest, body),
+          );
 
-          replyText = `${interpretation.encouragement}
-
-${interpretation.followUp}`;
+          replyText = formatInterpretationMessage(interpretation);
         } else {
           replyText = "Thanks! Elsy is thinking of a new quest for your child.";
         }
@@ -114,14 +116,12 @@ ${interpretation.followUp}`;
         const child = await getFirstChildForFamily(existingFamily.id);
 
         if (child) {
-          const generatedQuest = await generateQuest({
-            childName: child.name,
-            age: child.age,
-            interests: child.interests,
-          });
+          const questContext = await buildQuestContext(existingFamily, child);
+          const generatedQuest = await generateQuest(questContext);
 
           await createQuest({
             childId: child.id,
+            title: generatedQuest.title,
             prompt: generatedQuest.prompt,
             mission: generatedQuest.mission,
             followUp: generatedQuest.followUp,
@@ -130,15 +130,7 @@ ${interpretation.followUp}`;
 
           replyText += `
 
-🌱 ${generatedQuest.title}
-
-${generatedQuest.prompt}
-
-Mission:
-${generatedQuest.mission}
-
-Think about:
-${generatedQuest.followUp}`;
+${formatQuestMessage(generatedQuest)}`;
         }
       }
     }

@@ -1,9 +1,11 @@
 import { NextResponse } from "next/server";
 
 import { generateQuest } from "@/lib/agents/generateQuest";
+import { buildQuestContext } from "@/lib/agents/build-family-context";
 import { getCompleteFamilies } from "@/lib/db/families";
 import { getFirstChildForFamily } from "@/lib/db/children";
 import { createQuest } from "@/lib/db/quests";
+import { formatQuestMessage } from "@/lib/sms/format-quest";
 import { sendSms } from "@/lib/telnyx/sendSms";
 
 // Parse a preferred_time string like "8am", "8:30am", "6pm", "6:30pm" into a 24-hour integer (0–23).
@@ -26,23 +28,6 @@ function parsePreferredHour(preferredTime: string): number | null {
   }
 
   return hour;
-}
-
-function formatQuest(quest: {
-  title: string;
-  prompt: string;
-  mission: string;
-  followUp: string;
-}) {
-  return `🌱 ${quest.title}
-
-${quest.prompt}
-
-Mission:
-${quest.mission}
-
-Think about:
-${quest.followUp}`;
 }
 
 export async function GET(request: Request) {
@@ -70,21 +55,19 @@ export async function GET(request: Request) {
     const child = await getFirstChildForFamily(family.id);
     if (!child) continue;
 
-    const generatedQuest = await generateQuest({
-      childName: child.name,
-      age: child.age,
-      interests: child.interests,
-    });
+    const questContext = await buildQuestContext(family, child);
+    const generatedQuest = await generateQuest(questContext);
 
     await createQuest({
       childId: child.id,
+      title: generatedQuest.title,
       prompt: generatedQuest.prompt,
       mission: generatedQuest.mission,
       followUp: generatedQuest.followUp,
       skill: generatedQuest.skill,
     });
 
-    await sendSms(family.phone, formatQuest(generatedQuest));
+    await sendSms(family.phone, formatQuestMessage(generatedQuest));
 
     results.push({ phone: family.phone, status: "sent" });
   }

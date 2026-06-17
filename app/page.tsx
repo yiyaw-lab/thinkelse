@@ -5,6 +5,27 @@ import { ScrollNarrativeSection } from "@/components/sections/scroll-narrative-s
 import { QuestShowcase } from "@/components/demo/quest-showcase";
 import { MarqueeStrip } from "@/components/layout/marquee-strip";
 import { SiteHeader } from "@/components/layout/site-header";
+import { SITE } from "@/lib/site";
+
+const JSON_LD = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebSite",
+      name: SITE.name,
+      url: SITE.url,
+      description: SITE.description,
+      inLanguage: "en-US",
+    },
+    {
+      "@type": "Organization",
+      name: SITE.name,
+      url: SITE.url,
+      email: SITE.email,
+      description: SITE.description,
+    },
+  ],
+} as const;
 
 function formatPhoneDisplay(e164: string) {
   const match = e164.match(/^\+1(\d{3})(\d{3})(\d{4})$/);
@@ -86,6 +107,10 @@ function PrimaryCta({ className = "" }: { className?: string }) {
 export default function Home() {
   return (
     <div className="min-h-screen bg-pool-bg text-pool-ink">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(JSON_LD) }}
+      />
       <a
         href="#main"
         className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-xl focus:bg-white focus:px-4 focus:py-2"

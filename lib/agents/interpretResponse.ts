@@ -1,73 +1,98 @@
 import { openai } from "@/lib/openai";
 
-type InterpretResponseInput = {
-  childName: string;
-  age: number | null;
-  questPrompt: string;
-  questFollowUp: string;
-  childResponse: string;
-};
+import { ELSY_SYSTEM_PROMPT, formatQuestHistory, getAgeGuidance } from "./elsy-system";
+import { validateInterpretation } from "./quest-quality";
+import type { InterpretContext } from "./types";
 
 export type InterpretedResponse = {
   encouragement: string;
   followUp: string;
 };
 
-export async function interpretResponse({
-  childName,
-  age,
-  questPrompt,
-  questFollowUp,
-  childResponse,
-}: InterpretResponseInput): Promise<InterpretedResponse> {
+function buildInterpretPrompt(context: InterpretContext, revisionNotes?: string[]) {
+  const interests =
+    context.interests.length > 0 ? context.interests.join(", ") : "not specified";
+  const parentLine = context.parentName
+    ? `Parent relaying: ${context.parentName}`
+    : "Parent name: unknown";
+
+  const revisionBlock =
+    revisionNotes && revisionNotes.length > 0
+      ? `\nFix these issues:\n${revisionNotes.map((note) => `- ${note}`).join("\n")}\n`
+      : "";
+
+  return `
+A parent just shared their child's thinking about today's quest. Write Elsy's SMS reply.
+
+${parentLine}
+Child: ${context.childName} (age ${context.age ?? "unknown"})
+Interests: ${interests}
+${getAgeGuidance(context.age)}
+
+Today's quest${context.questTitle ? ` "${context.questTitle}"` : ""}:
+Question: "${context.questPrompt}"
+Mission: "${context.questMission}"
+Think-about: "${context.questFollowUp}"
+Skill: ${context.questSkill ?? "unknown"}
+
+What the child noticed/said (via parent):
+"${context.childResponse}"
+
+Recent family arc (optional context — don't recap at length):
+${formatQuestHistory(context.recentQuests)}
+
+Write for SMS to the parent. They may read your follow-up question aloud to ${context.childName}.
+
+Quality bar:
+- encouragement: 1–2 sentences. React to a SPECIFIC detail from what the child said — quote or paraphrase it
+- followUp: one question that goes one level deeper (Socratic retrieval). Must end with ?
+- warm, curious, never academic or generic praise
+- do not repeat the original quest question verbatim
+- if the response is thin, invite one concrete sensory detail rather than lecturing
+${revisionBlock}
+Return valid JSON only:
+{
+  "encouragement": "1-2 sentences",
+  "followUp": "one question ending with ?"
+}
+`;
+}
+
+async function requestInterpretation(
+  context: InterpretContext,
+  revisionNotes?: string[],
+): Promise<InterpretedResponse> {
   const response = await openai.chat.completions.create({
     model: "gpt-4.1-mini",
+    temperature: 0.8,
     messages: [
-      {
-        role: "system",
-        content:
-          "You are Elsy, a warm, concise, intellectually playful family curiosity companion. You help parents raise thoughtful children in the AI age.",
-      },
-      {
-        role: "user",
-        content: `
-A child just answered a curiosity quest. Respond with warm encouragement and one follow-up question to deepen their thinking.
-
-Child name: ${childName}
-Age: ${age ?? "unknown"}
-
-The quest prompt they received:
-"${questPrompt}"
-
-The follow-up they were asked to think about:
-"${questFollowUp}"
-
-The child's response (as shared by the parent):
-"${childResponse}"
-
-Rules:
-- Keep the tone warm, curious, and playful — never academic.
-- The encouragement should feel genuine, not generic. React to what they actually said.
-- The follow-up question should push their thinking one step further.
-- Be concise. This is an SMS reply.
-- Return valid JSON only.
-
-JSON shape:
-{
-  "encouragement": "2-3 sentences reacting to the child's response",
-  "followUp": "one follow-up question"
-}
-`,
-      },
+      { role: "system", content: ELSY_SYSTEM_PROMPT },
+      { role: "user", content: buildInterpretPrompt(context, revisionNotes) },
     ],
     response_format: { type: "json_object" },
   });
 
   const content = response.choices[0]?.message?.content;
-
   if (!content) {
     throw new Error("No interpretation generated.");
   }
 
   return JSON.parse(content) as InterpretedResponse;
+}
+
+export async function interpretResponse(
+  context: InterpretContext,
+): Promise<InterpretedResponse> {
+  let result = await requestInterpretation(context);
+  let issues = validateInterpretation(result, context.childResponse);
+
+  if (issues.length > 0) {
+    result = await requestInterpretation(context, issues);
+    issues = validateInterpretation(result, context.childResponse);
+    if (issues.length > 0) {
+      console.warn("Interpretation quality issues after retry:", issues);
+    }
+  }
+
+  return result;
 }

@@ -2,17 +2,15 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { ElsyAvatar } from "@/components/brand/elsy-avatar";
+import { pageMetadata } from "@/lib/site";
 
-export const metadata: Metadata = {
-  title: "Start — Else",
+export const metadata: Metadata = pageMetadata({
+  title: "Start your Else trial",
   description:
     "Start your 14-day Else trial. Daily curiosity quests for families by text.",
-  openGraph: {
-    title: "Start your Else trial",
-    description: "Daily curiosity quests for families. Text HELLO to begin.",
-    url: "https://elsey.app/start",
-  },
-};
+  path: "/start",
+  ogTitle: "Start your 14-day Else trial",
+});
 
 function formatPhoneDisplay(e164: string) {
   const match = e164.match(/^\+1(\d{3})(\d{3})(\d{4})$/);
