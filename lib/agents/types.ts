@@ -1,9 +1,12 @@
+import type { TemporalContext } from "./temporal-context";
+
 export type QuestHistoryEntry = {
   title: string | null;
   prompt: string;
   mission: string;
   skill: string | null;
   response: string | null;
+  elsyReply: string | null;
   createdAt: string;
 };
 
@@ -14,6 +17,7 @@ export type FamilyQuestContext = {
   interests: string[];
   questNumber: number;
   recentQuests: QuestHistoryEntry[];
+  temporal: TemporalContext;
 };
 
 export type InterpretContext = {

@@ -5,6 +5,7 @@ import { buildQuestContext } from "@/lib/agents/build-family-context";
 import { getCompleteFamilies } from "@/lib/db/families";
 import { getFirstChildForFamily } from "@/lib/db/children";
 import { createQuest } from "@/lib/db/quests";
+import { reviewStatusForFamily } from "@/lib/quests/review-policy";
 import { formatQuestMessage } from "@/lib/sms/format-quest";
 import { sendSms } from "@/lib/telnyx/sendSms";
 
@@ -57,6 +58,7 @@ export async function GET(request: Request) {
 
     const questContext = await buildQuestContext(family, child);
     const generatedQuest = await generateQuest(questContext);
+    const reviewStatus = await reviewStatusForFamily(family.id);
 
     await createQuest({
       childId: child.id,
@@ -65,6 +67,7 @@ export async function GET(request: Request) {
       mission: generatedQuest.mission,
       followUp: generatedQuest.followUp,
       skill: generatedQuest.skill,
+      reviewStatus,
     });
 
     await sendSms(family.phone, formatQuestMessage(generatedQuest));

@@ -1,5 +1,7 @@
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 
+const EARLY_COHORT_LIMIT = 50;
+
 export async function findFamilyByPhone(phone: string) {
   const { data, error } = await supabaseAdmin
     .from("families")
@@ -57,3 +59,39 @@ export async function updateFamily(id: string, updates: Record<string, unknown>)
     console.error("updateFamily error:", error);
   }
 }
+
+/** 1-based rank by signup date. Returns null if family not found. */
+export async function getFamilyCohortRank(familyId: string): Promise<number | null> {
+  const { data: family, error: familyError } = await supabaseAdmin
+    .from("families")
+    .select("created_at")
+    .eq("id", familyId)
+    .maybeSingle();
+
+  if (familyError || !family) {
+    console.error("getFamilyCohortRank error:", familyError);
+    return null;
+  }
+
+  const { count, error: countError } = await supabaseAdmin
+    .from("families")
+    .select("id", { count: "exact", head: true })
+    .lte("created_at", family.created_at);
+
+  if (countError) {
+    console.error("getFamilyCohortRank count error:", countError);
+    return null;
+  }
+
+  return count ?? null;
+}
+
+export async function isEarlyCohortFamily(
+  familyId: string,
+  limit = EARLY_COHORT_LIMIT,
+): Promise<boolean> {
+  const rank = await getFamilyCohortRank(familyId);
+  return rank !== null && rank <= limit;
+}
+
+export { EARLY_COHORT_LIMIT };

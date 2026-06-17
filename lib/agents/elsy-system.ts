@@ -44,11 +44,12 @@ export function getAgeGuidance(age: number | null): string {
 }
 
 export function formatQuestHistory(
-  recentQuests: Array<{
+    recentQuests: Array<{
     title: string | null;
     prompt: string;
     skill: string | null;
     response: string | null;
+    elsyReply?: string | null;
   }>,
 ): string {
   if (recentQuests.length === 0) {
@@ -62,7 +63,10 @@ export function formatQuestHistory(
       const childNote = quest.response
         ? ` — child shared: "${quest.response.slice(0, 120)}"`
         : "";
-      return `${index + 1}.${skill} ${label}${childNote}`;
+      const elsyNote = quest.elsyReply
+        ? ` — Elsy replied: "${quest.elsyReply.slice(0, 100)}"`
+        : "";
+      return `${index + 1}.${skill} ${label}${childNote}${elsyNote}`;
     })
     .join("\n");
 }

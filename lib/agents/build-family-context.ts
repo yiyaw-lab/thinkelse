@@ -1,9 +1,11 @@
 import { countQuestsForChild, getRecentQuestsForChild } from "@/lib/db/quests";
+import { getTemporalContext } from "./temporal-context";
 
 import type { FamilyQuestContext, InterpretContext, QuestHistoryEntry } from "./types";
 
 type FamilyRow = {
   parent_name?: string | null;
+  preferred_time?: string | null;
 };
 
 type ChildRow = {
@@ -20,6 +22,7 @@ type QuestRow = {
   follow_up: string | null;
   skill: string | null;
   response: string | null;
+  elsy_reply?: string | null;
   created_at: string;
 };
 
@@ -30,6 +33,7 @@ function mapQuestHistory(quests: QuestRow[]): QuestHistoryEntry[] {
     mission: quest.mission,
     skill: quest.skill,
     response: quest.response,
+    elsyReply: quest.elsy_reply ?? null,
     createdAt: quest.created_at,
   }));
 }
@@ -43,6 +47,8 @@ export async function buildQuestContext(
     countQuestsForChild(child.id),
   ]);
 
+  const temporal = getTemporalContext(new Date(), family.preferred_time);
+
   return {
     parentName: family.parent_name ?? null,
     childName: child.name,
@@ -50,6 +56,7 @@ export async function buildQuestContext(
     interests: child.interests ?? [],
     questNumber: questCount + 1,
     recentQuests: mapQuestHistory(recentQuests),
+    temporal,
   };
 }
 

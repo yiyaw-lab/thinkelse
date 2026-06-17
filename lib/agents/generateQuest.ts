@@ -6,6 +6,7 @@ import {
   getAgeGuidance,
   suggestNextSkills,
 } from "./elsy-system";
+import { formatTemporalContext } from "./temporal-context";
 import { validateQuest } from "./quest-quality";
 import type { FamilyQuestContext } from "./types";
 
@@ -37,6 +38,8 @@ Child name: ${context.childName}
 Age: ${context.age ?? "unknown"}
 Interests: ${interests}
 This is quest #${context.questNumber} for this child.
+
+${formatTemporalContext(context.temporal)}
 
 ${getAgeGuidance(context.age)}
 

@@ -21,8 +21,10 @@ import {
 import {
   createQuest,
   getLatestQuestForChild,
+  saveElsyReply,
   updateQuestResponse,
 } from "@/lib/db/quests";
+import { reviewStatusForFamily } from "@/lib/quests/review-policy";
 import { sendSms } from "@/lib/telnyx/sendSms";
 import {
   formatInterpretationMessage,
@@ -70,6 +72,7 @@ async function handleInboundMessage(from: string, body: string) {
           );
 
           replyText = formatInterpretationMessage(interpretation);
+          await saveElsyReply(latestQuest.id, replyText);
         } else {
           replyText = "Thanks! Elsy is thinking of a new quest for your child.";
         }
@@ -118,6 +121,7 @@ async function handleInboundMessage(from: string, body: string) {
         if (child) {
           const questContext = await buildQuestContext(existingFamily, child);
           const generatedQuest = await generateQuest(questContext);
+          const reviewStatus = await reviewStatusForFamily(existingFamily.id);
 
           await createQuest({
             childId: child.id,
@@ -126,6 +130,7 @@ async function handleInboundMessage(from: string, body: string) {
             mission: generatedQuest.mission,
             followUp: generatedQuest.followUp,
             skill: generatedQuest.skill,
+            reviewStatus,
           });
 
           replyText += `

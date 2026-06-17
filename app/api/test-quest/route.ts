@@ -16,6 +16,7 @@ const SAMPLE_CONTEXT: FamilyQuestContext = {
       mission: "Trace your shadow with chalk at three different times.",
       skill: "observation",
       response: "Her shadow was longest before dinner.",
+      elsyReply: "Sharp noticing — what do you think made the shadow stretch that long?",
       createdAt: "2026-06-12T08:00:00Z",
     },
     {
@@ -24,9 +25,15 @@ const SAMPLE_CONTEXT: FamilyQuestContext = {
       mission: "Close your eyes for ten seconds and count every sound.",
       skill: "listening",
       response: "She heard a bird and a truck backup beep.",
+      elsyReply: null,
       createdAt: "2026-06-11T08:00:00Z",
     },
   ],
+  temporal: {
+    season: "summer",
+    timeOfDay: "morning",
+    settingHints: ["breakfast table", "walk to school", "window light"],
+  },
 };
 
 export async function GET() {

@@ -121,6 +121,23 @@ https://elsey.app/api/cron/daily-quest
 Authorization: Bearer YOUR_CRON_SECRET
 ```
 
+### Quest review queue (first 50 families)
+
+Quests from the first 50 families are flagged `review_status: pending` for human QA.
+
+```bash
+# List pending quests
+curl -H "Authorization: Bearer YOUR_ADMIN_SECRET" https://elsey.app/api/admin/review-queue
+
+# Approve / flag / skip
+curl -X PATCH https://elsey.app/api/admin/review-queue \
+  -H "Authorization: Bearer YOUR_ADMIN_SECRET" \
+  -H "Content-Type: application/json" \
+  -d '{"questId":"...","status":"approved","notes":"optional"}'
+```
+
+Uses `ADMIN_SECRET` if set, otherwise falls back to `CRON_SECRET`.
+
 ## API routes
 
 | Route | Method | Description |
@@ -129,3 +146,5 @@ Authorization: Bearer YOUR_CRON_SECRET
 | `/api/cron/daily-quest` | GET | Sends daily quests to families at their preferred time |
 | `/api/health` | GET | Health check |
 | `/api/test-quest` | GET | Generate a sample quest (local dev only) |
+| `/api/test-interpret` | GET | Generate a sample Elsy reply (local dev only) |
+| `/api/admin/review-queue` | GET, PATCH | Human review queue for first 50 families |
