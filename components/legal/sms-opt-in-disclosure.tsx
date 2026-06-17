@@ -3,7 +3,10 @@ import { LEGAL } from "@/lib/legal/constants";
 
 export function SmsOptInDisclosure({ className = "" }: { className?: string }) {
   return (
-    <p className={`text-xs leading-relaxed text-pool-muted ${className}`}>
+    <div
+      className={`rounded-2xl border border-pool-line bg-white px-4 py-3 ${className}`}
+    >
+      <p className="text-xs leading-relaxed text-pool-muted">
       By texting <strong>HELLO</strong> to {LEGAL.brand}, you agree to receive
       recurring automated SMS from the {LEGAL.programName}, including onboarding
       messages, daily curiosity quests, and service replies.{" "}
@@ -19,6 +22,7 @@ export function SmsOptInDisclosure({ className = "" }: { className?: string }) {
         Privacy Policy
       </Link>
       .
-    </p>
+      </p>
+    </div>
   );
 }

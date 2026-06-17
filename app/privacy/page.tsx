@@ -36,7 +36,7 @@ export default function PrivacyPage() {
         </div>
       </header>
 
-      <main className="mx-auto max-w-2xl px-6 py-12 text-sm leading-relaxed">
+      <main className="legal-content mx-auto max-w-2xl px-6 py-12 text-sm leading-relaxed">
         <h1 className="pool-display-sm mb-3">Privacy Policy</h1>
         <p className="mb-8 text-pool-muted">
           {LEGAL.brand} (&ldquo;Else,&rdquo; &ldquo;we,&rdquo; &ldquo;us,&rdquo; or

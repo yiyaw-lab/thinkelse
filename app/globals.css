@@ -17,7 +17,7 @@
   --rose-100: #ffe5ef;
 
   /* Semantic aliases */
-  --background: var(--cream-50);
+  --background: var(--pool-bg);
   --foreground: var(--ink-800);
   --muted: #4a4568;
   --muted-fg: #6b6585;
@@ -134,12 +134,20 @@ html {
 }
 
 body {
-  background: var(--background);
+  background: var(--pool-bg);
   color: var(--foreground);
   font-family: var(--font-body), system-ui, sans-serif;
   font-weight: 400;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
+}
+
+.legal-content strong,
+.legal-content b,
+.legal-content mark {
+  font-weight: 600;
+  color: var(--pool-ink);
+  background: transparent;
 }
 
 h1,
