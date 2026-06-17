@@ -5,6 +5,7 @@ import { ScrollNarrativeSection } from "@/components/sections/scroll-narrative-s
 import { QuestShowcase } from "@/components/demo/quest-showcase";
 import { MarqueeStrip } from "@/components/layout/marquee-strip";
 import { SiteHeader } from "@/components/layout/site-header";
+import { SmsOptInDisclosure } from "@/components/legal/sms-opt-in-disclosure";
 import { SITE } from "@/lib/site";
 
 const JSON_LD = {
@@ -140,6 +141,7 @@ export default function Home() {
 
             <div className="flex flex-col items-start gap-5">
               <PrimaryCta />
+              <SmsOptInDisclosure className="max-w-xl" />
               <ul className="flex flex-wrap gap-2">
                 {["Ages 5–12", "2-min setup", "iMessage & SMS"].map((item) => (
                   <li key={item} className="pool-chip">
@@ -224,6 +226,7 @@ export default function Home() {
               One text to begin. Elsy takes it from there.
             </p>
             <PrimaryCta />
+            <SmsOptInDisclosure className="mt-5 max-w-md text-center" />
           </div>
         </section>
       </main>

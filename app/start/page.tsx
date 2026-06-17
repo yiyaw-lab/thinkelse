@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { ElsyAvatar } from "@/components/brand/elsy-avatar";
+import { SmsOptInDisclosure } from "@/components/legal/sms-opt-in-disclosure";
 import { pageMetadata } from "@/lib/site";
 
 export const metadata: Metadata = pageMetadata({
@@ -41,9 +42,14 @@ export default function StartPage() {
           <Link href="/" className="text-sm font-semibold text-pool-ink hover:text-pool-blue">
             ← Else
           </Link>
-          <Link href="/privacy" className="text-xs text-pool-muted hover:text-pool-blue">
-            Privacy
-          </Link>
+          <div className="flex gap-3 text-xs text-pool-muted">
+            <Link href="/privacy" className="hover:text-pool-blue">
+              Privacy
+            </Link>
+            <Link href="/terms" className="hover:text-pool-blue">
+              Terms
+            </Link>
+          </div>
         </div>
       </header>
 
@@ -93,20 +99,7 @@ export default function StartPage() {
           <span className="text-center text-sm font-normal text-white/85">{PHONE_NUMBER}</span>
         </a>
 
-        <p className="mb-8 text-center text-xs leading-relaxed text-pool-muted">
-          By texting HELLO, you agree to receive recurring SMS from Else and accept
-          our{" "}
-          <Link href="/terms" className="text-pool-blue hover:underline">
-            Terms
-          </Link>{" "}
-          and{" "}
-          <Link href="/privacy" className="text-pool-blue hover:underline">
-            Privacy Policy
-          </Link>
-          . Message frequency varies (typically 1–3/day). Msg &amp; data rates may
-          apply. Reply STOP to cancel, HELP for help. Consent is not required for
-          purchase.
-        </p>
+        <SmsOptInDisclosure className="mb-8 text-center" />
 
         <div className="rounded-2xl border border-pool-line bg-white px-5 py-4 text-sm text-pool-muted">
           <p className="mb-1 font-medium text-pool-ink">Already on Else?</p>
