@@ -1,18 +1,79 @@
 # Else
 
+[![CI](https://github.com/yiyaw-lab/thinkelse/actions/workflows/ci.yml/badge.svg)](https://github.com/yiyaw-lab/thinkelse/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
 Else is a text-based family curiosity coach. Parents text **Elsy** — a warm, intellectually playful AI companion — and Elsy sends personalized daily curiosity quests designed to help children think beyond the obvious.
 
 ## Mission
 
 Help parents raise thoughtful children in the AI age, one tiny curiosity quest at a time.
 
-## How it works
+## The Else loop
 
 1. A parent texts the Else number to get started
 2. Elsy onboards the family — learning the child's name, age, and interests
 3. Elsy sends a personalized curiosity quest every day at a preferred time
 4. The parent shares their child's response via SMS
 5. Elsy interprets the response, offers a warm follow-up, and grows with the child
+
+## How it works
+
+Everything runs on Next.js (App Router) on Vercel. Routes stay thin: each route
+hands off to the AI reasoning layer in `lib/agents`, the database helpers in
+`lib/db`, and the Telnyx helpers in `lib/telnyx`. Supabase (PostgreSQL) is the
+single source of truth; OpenAI generates and interprets quests; Telnyx carries
+SMS in both directions.
+
+There are two entry points. **Inbound SMS** (`/api/sms/inbound`) is a Telnyx
+webhook that verifies the signature, then either runs SMS compliance keywords
+(STOP / HELP / START), advances the onboarding state machine, or interprets a
+child's response and replies. **The daily-quest cron** (`/api/cron/daily-quest`)
+is polled hourly (an external scheduler on Vercel Hobby), matches each family's
+local hour against their preferred time, generates a quest, and sends it. Quests
+from the first 50 families are flagged `pending` for human QA via the admin
+review queue (`/admin/review` + `/api/admin/review-queue`).
+
+```mermaid
+flowchart TD
+    Parent([Parent's phone])
+    Telnyx[Telnyx SMS]
+    Scheduler[Hourly external scheduler]
+
+    subgraph App[Next.js app on Vercel]
+        Inbound["/api/sms/inbound<br/>(verify + route)"]
+        Cron["/api/cron/daily-quest<br/>(match local hour)"]
+        Admin["/admin/review +<br/>/api/admin/review-queue"]
+
+        subgraph Lib[lib]
+            Onboard[onboarding state machine]
+            Agents["agents<br/>(generate + interpret quests)"]
+            DB["db<br/>(families, children, quests)"]
+            TelnyxLib[telnyx client]
+        end
+    end
+
+    OpenAI[OpenAI]
+    Supabase[(Supabase / PostgreSQL)]
+    Reviewer([Human reviewer])
+
+    Parent -->|texts Elsy| Telnyx -->|webhook| Inbound
+    Scheduler -->|hourly GET| Cron
+
+    Inbound --> Onboard
+    Inbound --> Agents
+    Cron --> Agents
+    Agents --> OpenAI
+    Onboard --> DB
+    Agents --> DB
+    DB <--> Supabase
+
+    Inbound --> TelnyxLib
+    Cron --> TelnyxLib
+    TelnyxLib -->|outbound SMS| Telnyx -->|quest / reply| Parent
+
+    Reviewer --> Admin --> DB
+```
 
 ## Stack
 
