@@ -9,7 +9,8 @@ export function SmsOptInDisclosure({ className = "" }: { className?: string }) {
       <p className="text-xs leading-relaxed text-pool-muted">
       By texting <strong>HELLO</strong> to {LEGAL.brand}, you agree to receive
       recurring automated SMS from the {LEGAL.programName}, including onboarding
-      messages, daily curiosity quests, and service replies.{" "}
+      messages, daily curiosity quests, optional dinner conversation questions, and
+      service replies.{" "}
       {LEGAL.messageFrequency}. Message and data rates may apply. Reply{" "}
       <strong>STOP</strong> to opt out. Reply <strong>HELP</strong> for help. Consent
       is not a condition of purchase. Your mobile information will not be sold or

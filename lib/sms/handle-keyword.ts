@@ -8,6 +8,7 @@ import {
   isHelpKeyword,
   isStartKeyword,
   isStopKeyword,
+  normalizeSmsBody,
 } from "@/lib/sms/keywords";
 
 type FamilyRow = {
@@ -25,6 +26,8 @@ export async function handleSmsKeyword(
   body: string,
   family: FamilyRow | null,
 ): Promise<KeywordResult> {
+  const normalizedBody = normalizeSmsBody(body);
+
   if (isStopKeyword(body)) {
     if (family) {
       await updateFamily(family.id, { sms_opted_in: false });
@@ -57,6 +60,10 @@ export async function handleSmsKeyword(
         reply: getStartConfirmation(),
         stopProcessing: true,
       };
+    }
+
+    if (normalizedBody === "yes" && family.onboarding_step !== "complete") {
+      return { handled: false };
     }
 
     return {

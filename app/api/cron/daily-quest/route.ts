@@ -7,6 +7,10 @@ import { getFirstChildForFamily } from "@/lib/db/children";
 import { createQuest, hasQuestOnLocalDay } from "@/lib/db/quests";
 import { reviewStatusForFamily } from "@/lib/quests/review-policy";
 import { formatQuestMessage } from "@/lib/sms/format-quest";
+import {
+  checkOutboundRateLimit,
+  recordOutboundSent,
+} from "@/lib/sms/guardrails";
 import { sendSms } from "@/lib/telnyx/sendSms";
 import { DEFAULT_TIMEZONE, formatLocalDateKey, getLocalHour } from "@/lib/timezone";
 
@@ -74,9 +78,21 @@ export async function GET(request: Request) {
       continue;
     }
 
+    const outboundLimit = await checkOutboundRateLimit({
+      phone: family.phone,
+      familyId: family.id,
+      bodyLength: 0,
+    });
+
+    if (!outboundLimit.allowed) {
+      results.push({ phone: family.phone, status: `skipped_${outboundLimit.reason}` });
+      continue;
+    }
+
     const questContext = await buildQuestContext(family, child);
     const generatedQuest = await generateQuest(questContext);
     const reviewStatus = await reviewStatusForFamily(family.id);
+    const message = formatQuestMessage(generatedQuest);
 
     await createQuest({
       childId: child.id,
@@ -88,7 +104,12 @@ export async function GET(request: Request) {
       reviewStatus,
     });
 
-    await sendSms(family.phone, formatQuestMessage(generatedQuest));
+    await sendSms(family.phone, message);
+    await recordOutboundSent({
+      phone: family.phone,
+      familyId: family.id,
+      bodyLength: message.length,
+    });
 
     results.push({ phone: family.phone, status: "sent" });
   }

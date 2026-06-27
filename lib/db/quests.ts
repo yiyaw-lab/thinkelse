@@ -2,6 +2,7 @@ import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { formatLocalDateKey } from "@/lib/timezone";
 
 export type QuestReviewStatus = "pending" | "approved" | "flagged" | "skipped";
+export type QuestMissionStatus = "assigned" | "completed";
 
 export async function getLatestQuestForChild(childId: string) {
   const { data, error } = await supabaseAdmin
@@ -49,7 +50,7 @@ export async function getRecentQuestsForChild(childId: string, limit = 8) {
   const { data, error } = await supabaseAdmin
     .from("quests")
     .select(
-      "title, prompt, mission, follow_up, skill, response, elsy_reply, created_at",
+      "title, prompt, mission, follow_up, skill, response, elsy_reply, mission_status, completed_at, created_at",
     )
     .eq("child_id", childId)
     .order("created_at", { ascending: false })
@@ -77,10 +78,34 @@ export async function countQuestsForChild(childId: string) {
   return count ?? 0;
 }
 
-export async function updateQuestResponse(questId: string, response: string) {
+export async function countCompletedQuestsForChild(childId: string) {
+  const { count, error } = await supabaseAdmin
+    .from("quests")
+    .select("id", { count: "exact", head: true })
+    .eq("child_id", childId)
+    .eq("mission_status", "completed");
+
+  if (error) {
+    console.error("countCompletedQuestsForChild error:", error);
+    return 0;
+  }
+
+  return count ?? 0;
+}
+
+export async function updateQuestResponse(
+  questId: string,
+  response: string,
+  existingCompletedAt?: string | null,
+) {
+  const completedAt = existingCompletedAt ?? new Date().toISOString();
   const { error } = await supabaseAdmin
     .from("quests")
-    .update({ response })
+    .update({
+      response,
+      mission_status: "completed" satisfies QuestMissionStatus,
+      completed_at: completedAt,
+    })
     .eq("id", questId);
 
   if (error) {
@@ -129,6 +154,8 @@ export type PendingReviewQuest = {
   skill: string | null;
   response: string | null;
   elsy_reply: string | null;
+  mission_status: string | null;
+  completed_at: string | null;
   review_status: string | null;
   review_notes: string | null;
   created_at: string;
@@ -149,7 +176,7 @@ export async function getPendingReviewQuests(limit = 25) {
     .select(
       `
       id, title, prompt, mission, follow_up, skill, response, elsy_reply,
-      review_status, review_notes, created_at,
+      mission_status, completed_at, review_status, review_notes, created_at,
       children (
         name, age, interests,
         families ( parent_name, phone )
@@ -182,6 +209,8 @@ export async function getPendingReviewQuests(limit = 25) {
       skill: row.skill,
       response: row.response,
       elsy_reply: row.elsy_reply,
+      mission_status: row.mission_status,
+      completed_at: row.completed_at,
       review_status: row.review_status,
       review_notes: row.review_notes,
       created_at: row.created_at,

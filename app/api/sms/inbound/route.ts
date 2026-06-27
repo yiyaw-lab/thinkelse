@@ -7,7 +7,13 @@ import {
   buildInterpretContext,
   buildQuestContext,
 } from "@/lib/agents/build-family-context";
-import { getOnboardingReply, invalidTimezoneReply } from "@/lib/onboarding";
+import {
+  getOnboardingReply,
+  invalidDinnerConversationReply,
+  invalidTimezoneReply,
+  parseDinnerConversationOptIn,
+  validateOnboardingInput,
+} from "@/lib/onboarding";
 import {
   createFamily,
   findFamilyByPhone,
@@ -21,6 +27,7 @@ import {
 import {
   createQuest,
   getLatestQuestForChild,
+  hasQuestOnLocalDay,
   saveElsyReply,
   updateQuestResponse,
 } from "@/lib/db/quests";
@@ -31,11 +38,27 @@ import {
   formatInterpretationMessage,
   formatQuestMessage,
 } from "@/lib/sms/format-quest";
+import { isQuestRequestKeyword } from "@/lib/sms/keywords";
+import {
+  checkAndRecordAction,
+  checkInboundRateLimit,
+  checkOutboundRateLimit,
+  isLikelyE164Phone,
+  MAX_INBOUND_SMS_CHARS,
+  MAX_TELNYX_WEBHOOK_BYTES,
+  recordInboundAccepted,
+  recordOutboundSent,
+} from "@/lib/sms/guardrails";
+import { logSmsGuardrailEvent } from "@/lib/db/sms-guardrails";
 import {
   shouldVerifyTelnyxWebhook,
   verifyTelnyxWebhookSignature,
 } from "@/lib/telnyx/verifyWebhook";
-import { parseTimezoneInput } from "@/lib/timezone";
+import {
+  DEFAULT_TIMEZONE,
+  formatLocalDateKey,
+  parseTimezoneInput,
+} from "@/lib/timezone";
 
 type TelnyxInboundWebhook = {
   data?: {
@@ -47,14 +70,45 @@ type TelnyxInboundWebhook = {
   };
 };
 
-async function completeOnboardingWithQuest(
+async function createOnDemandQuestMessage(
   family: NonNullable<Awaited<ReturnType<typeof findFamilyByPhone>>>,
-  replyPrefix: string,
-) {
+): Promise<string> {
   const child = await getFirstChildForFamily(family.id);
 
   if (!child) {
-    return replyPrefix;
+    return "You're all set, but I need your child's profile before I can make a quest.";
+  }
+
+  const timezone =
+    typeof family.timezone === "string" && family.timezone
+      ? family.timezone
+      : DEFAULT_TIMEZONE;
+  const alreadySentToday = await hasQuestOnLocalDay(
+    child.id,
+    formatLocalDateKey(timezone, new Date()),
+    timezone,
+  );
+
+  if (alreadySentToday) {
+    await logSmsGuardrailEvent({
+      phone: family.phone,
+      familyId: family.id,
+      eventType: "quest_request",
+      status: "blocked",
+      reason: "quest_already_sent_today",
+    });
+
+    return "Elsy has already sent today's quest. Try it together, then reply with what your child noticed.";
+  }
+
+  const questLimit = await checkAndRecordAction({
+    phone: family.phone,
+    familyId: family.id,
+    eventType: "quest_request",
+  });
+
+  if (!questLimit.allowed) {
+    return "Elsy can only make a few on-demand quests at a time. Please try again later, or wait for your next daily quest.";
   }
 
   const questContext = await buildQuestContext(family, child);
@@ -71,9 +125,72 @@ async function completeOnboardingWithQuest(
     reviewStatus,
   });
 
-  return `${replyPrefix}
+  return formatQuestMessage(generatedQuest);
+}
 
-${formatQuestMessage(generatedQuest)}`;
+async function sendKeywordReply(to: string, body: string, familyId?: string | null) {
+  const sent = await sendSms(to, body);
+  await recordOutboundSent({ phone: to, familyId, bodyLength: body.length });
+  console.info("Outbound SMS queued:", { to, messageId: sent.id });
+}
+
+async function sendGuardedReply(to: string, body: string, familyId?: string | null) {
+  const outboundLimit = await checkOutboundRateLimit({
+    phone: to,
+    familyId,
+    bodyLength: body.length,
+  });
+
+  if (!outboundLimit.allowed) {
+    console.warn("Outbound SMS blocked by guardrail:", {
+      to,
+      familyId,
+      reason: outboundLimit.reason,
+    });
+    return;
+  }
+
+  const sent = await sendSms(to, body);
+  await recordOutboundSent({ phone: to, familyId, bodyLength: body.length });
+  console.info("Outbound SMS queued:", { to, messageId: sent.id });
+}
+
+async function sendGuardrailNotice(
+  to: string,
+  body: string,
+  familyId?: string | null,
+) {
+  const noticeLimit = await checkAndRecordAction({
+    phone: to,
+    familyId,
+    eventType: "rate_limit_notice",
+  });
+
+  if (!noticeLimit.allowed) {
+    return;
+  }
+
+  await sendKeywordReply(to, body, familyId);
+}
+
+async function handleOversizedMessage(from: string, bodyLength: number) {
+  const existingFamily = await findFamilyByPhone(from);
+  const familyId = existingFamily?.id ?? null;
+
+  await logSmsGuardrailEvent({
+    phone: from,
+    familyId,
+    eventType: "inbound_message",
+    status: "blocked",
+    reason: "message_too_long",
+    bodyLength,
+  });
+
+  await sendGuardrailNotice(
+    from,
+    "That message is too long for SMS. Please send a shorter reply, or reply HELP for support.",
+    familyId,
+  );
 }
 
 async function handleInboundMessage(from: string, body: string) {
@@ -82,8 +199,7 @@ async function handleInboundMessage(from: string, body: string) {
 
   if (keywordResult.handled) {
     if (keywordResult.reply) {
-      const sent = await sendSms(from, keywordResult.reply);
-      console.info("Outbound SMS queued:", { to: from, messageId: sent.id });
+      await sendKeywordReply(from, keywordResult.reply, existingFamily?.id ?? null);
     }
 
     if (keywordResult.stopProcessing) {
@@ -92,6 +208,24 @@ async function handleInboundMessage(from: string, body: string) {
 
     existingFamily = await findFamilyByPhone(from);
   }
+
+  const familyId = existingFamily?.id ?? null;
+  const inboundLimit = await checkInboundRateLimit({
+    phone: from,
+    familyId,
+    bodyLength: body.length,
+  });
+
+  if (!inboundLimit.allowed) {
+    await sendGuardrailNotice(
+      from,
+      "Elsy is getting a lot of messages from this number. Please pause for a bit, or reply HELP for support.",
+      familyId,
+    );
+    return;
+  }
+
+  await recordInboundAccepted({ phone: from, familyId, bodyLength: body.length });
 
   let replyText = "";
 
@@ -106,90 +240,147 @@ async function handleInboundMessage(from: string, body: string) {
     if (currentStep === "complete") {
       const child = await getFirstChildForFamily(existingFamily.id);
 
-      if (child) {
+      if (isQuestRequestKeyword(body)) {
+        replyText = await createOnDemandQuestMessage(existingFamily);
+      } else if (child) {
         const latestQuest = await getLatestQuestForChild(child.id);
 
         if (latestQuest) {
-          await updateQuestResponse(latestQuest.id, body);
+          const interpretationLimit = await checkAndRecordAction({
+            phone: from,
+            familyId: existingFamily.id,
+            eventType: "interpretation_request",
+            bodyLength: body.length,
+          });
 
-          const interpretation = await interpretResponse(
-            await buildInterpretContext(existingFamily, child, latestQuest, body),
-          );
+          if (!interpretationLimit.allowed) {
+            replyText =
+              "Elsy needs a little time before another coaching reply. Please pause and try again later.";
+          } else {
+            await updateQuestResponse(latestQuest.id, body, latestQuest.completed_at);
 
-          replyText = formatInterpretationMessage(interpretation);
-          await saveElsyReply(latestQuest.id, replyText);
+            const interpretation = await interpretResponse(
+              await buildInterpretContext(existingFamily, child, latestQuest, body),
+            );
+
+            replyText = formatInterpretationMessage(interpretation);
+            await saveElsyReply(latestQuest.id, replyText);
+          }
         } else {
-          replyText = "Thanks! Elsy is thinking of a new quest for your child.";
+          replyText = "You're all set. Elsy will send your first quest at your preferred time. Reply QUEST if you'd like one now.";
         }
       }
     } else {
-      if (currentStep === "child_name") {
-        await createChild(existingFamily.id, body);
-      }
+      const validation = validateOnboardingInput(currentStep, body);
 
-      if (currentStep === "child_age") {
-        const age = Number.parseInt(body, 10);
-
-        await updateChildrenForFamily(existingFamily.id, {
-          age: Number.isNaN(age) ? null : age,
+      if (!validation.ok) {
+        await logSmsGuardrailEvent({
+          phone: from,
+          familyId: existingFamily.id,
+          eventType: "inbound_message",
+          status: "blocked",
+          reason: `invalid_${currentStep ?? "onboarding"}_input`,
+          bodyLength: body.length,
         });
-      }
 
-      if (currentStep === "child_interests") {
-        const interests = body
-          .split(",")
-          .map((interest) => interest.trim())
-          .filter(Boolean);
+        replyText = validation.reply;
+      } else {
+        const validatedBody =
+          typeof validation.value === "string" ? validation.value : body;
 
-        await updateChildrenForFamily(existingFamily.id, {
-          interests,
-        });
-      }
+        if (currentStep === "child_name") {
+          await createChild(existingFamily.id, validation.value as string);
+        }
 
-      if (currentStep === "timezone") {
-        const timezone = parseTimezoneInput(body);
+        if (currentStep === "child_age") {
+          await updateChildrenForFamily(existingFamily.id, {
+            age: validation.value as number,
+          });
+        }
 
-        if (!timezone) {
-          replyText = invalidTimezoneReply();
+        if (currentStep === "child_interests") {
+          await updateChildrenForFamily(existingFamily.id, {
+            interests: validation.value as string[],
+          });
+        }
+
+        if (currentStep === "timezone") {
+          const timezone = parseTimezoneInput(body);
+
+          if (!timezone) {
+            replyText = invalidTimezoneReply();
+          } else {
+            await updateFamily(existingFamily.id, {
+              timezone,
+              onboarding_step: "dinner_conversation",
+              parent_name: existingFamily.parent_name,
+              preferred_time: existingFamily.preferred_time,
+            });
+
+            replyText = getOnboardingReply("timezone", body).reply;
+          }
+        } else if (currentStep === "dinner_conversation") {
+          const dinnerConversationOptIn = parseDinnerConversationOptIn(body);
+
+          if (dinnerConversationOptIn === null) {
+            replyText = invalidDinnerConversationReply();
+          } else {
+            await updateFamily(existingFamily.id, {
+              onboarding_step: "complete",
+              parent_name: existingFamily.parent_name,
+              preferred_time: existingFamily.preferred_time,
+              dinner_conversation_opt_in: dinnerConversationOptIn,
+            });
+
+            const preferenceReply = dinnerConversationOptIn
+              ? "Great, I'll remember you'd like dinner conversation questions."
+              : "No problem, we'll stick to daily curiosity quests.";
+
+            replyText = `${preferenceReply} ${getOnboardingReply("dinner_conversation", body).reply} Reply QUEST if you'd like one now.`;
+          }
         } else {
+          const onboarding = getOnboardingReply(currentStep, validatedBody);
+
           await updateFamily(existingFamily.id, {
-            timezone,
-            onboarding_step: "complete",
-            parent_name: existingFamily.parent_name,
-            preferred_time: existingFamily.preferred_time,
+            onboarding_step: onboarding.nextStep,
+            parent_name:
+              currentStep === "parent_name"
+                ? (validation.value as string)
+                : existingFamily.parent_name,
+            preferred_time:
+              currentStep === "preferred_time"
+                ? (validation.value as string)
+                : existingFamily.preferred_time,
           });
 
-          replyText = await completeOnboardingWithQuest(
-            { ...existingFamily, timezone, onboarding_step: "complete" },
-            getOnboardingReply("timezone", body).reply,
-          );
+          replyText = onboarding.reply;
         }
-      } else {
-        const onboarding = getOnboardingReply(currentStep, body);
-
-        await updateFamily(existingFamily.id, {
-          onboarding_step: onboarding.nextStep,
-          parent_name:
-            currentStep === "parent_name" ? body : existingFamily.parent_name,
-          preferred_time:
-            currentStep === "preferred_time"
-              ? body
-              : existingFamily.preferred_time,
-        });
-
-        replyText = onboarding.reply;
       }
     }
   }
 
   if (replyText) {
-    const sent = await sendSms(from, replyText);
-    console.info("Outbound SMS queued:", { to: from, messageId: sent.id });
+    await sendGuardedReply(from, replyText, existingFamily?.id ?? null);
   }
 }
 
 export async function POST(request: Request) {
+  const contentLength = request.headers.get("content-length");
+  if (contentLength && Number.parseInt(contentLength, 10) > MAX_TELNYX_WEBHOOK_BYTES) {
+    return NextResponse.json(
+      { ok: false, error: "Payload too large" },
+      { status: 413 },
+    );
+  }
+
   const rawBody = await request.text();
+
+  if (Buffer.byteLength(rawBody, "utf8") > MAX_TELNYX_WEBHOOK_BYTES) {
+    return NextResponse.json(
+      { ok: false, error: "Payload too large" },
+      { status: 413 },
+    );
+  }
 
   if (shouldVerifyTelnyxWebhook()) {
     const publicKey = process.env.TELNYX_PUBLIC_KEY;
@@ -228,6 +419,22 @@ export async function POST(request: Request) {
   const body = (webhook.data.payload?.text ?? "").trim();
 
   if (!from || !body) {
+    return NextResponse.json({ ok: true });
+  }
+
+  if (!isLikelyE164Phone(from)) {
+    console.warn("Inbound SMS: ignored invalid sender phone format");
+    return NextResponse.json({ ok: true });
+  }
+
+  if (body.length > MAX_INBOUND_SMS_CHARS) {
+    waitUntil(
+      handleOversizedMessage(from, body.length).catch((error) => {
+        const message = error instanceof Error ? error.message : String(error);
+        console.error("Inbound SMS oversized handler failed:", message);
+      }),
+    );
+
     return NextResponse.json({ ok: true });
   }
 

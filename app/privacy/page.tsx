@@ -140,7 +140,10 @@ export default function PrivacyPage() {
             <ul className="list-disc space-y-2 pl-5">
               <li>Provide, operate, and improve the Else SMS service</li>
               <li>Onboard your family and personalize daily quests and replies</li>
-              <li>Deliver onboarding messages, daily quests, and Elsy&rsquo;s responses</li>
+              <li>
+                Deliver onboarding messages, daily quests, optional dinner conversation
+                questions, and Elsy&rsquo;s responses
+              </li>
               <li>Maintain quest history and family context over time</li>
               <li>Process subscriptions or trials when billing is enabled</li>
               <li>Respond to HELP, STOP, and support requests</li>
@@ -164,8 +167,8 @@ export default function PrivacyPage() {
             </p>
             <p>
               <strong>Message types:</strong> onboarding messages, daily curiosity
-              quests, service replies, account or billing notices (if applicable), and
-              occasional service-related updates.
+              quests, optional dinner conversation questions, service replies, account or
+              billing notices (if applicable), and occasional service-related updates.
             </p>
             <p>
               <strong>Message frequency:</strong> {LEGAL.messageFrequency}.
