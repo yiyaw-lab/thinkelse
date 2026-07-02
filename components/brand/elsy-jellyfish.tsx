@@ -187,13 +187,13 @@ export function ElsyJellyfish({
             </g>
 
             <g className="elsy-tip-dots">
-              {[
+              {([
                 [378, 590, "#b7a6ef"],
                 [416, 604, "#ffd78a"],
                 [534, 602, "#ff9ec8"],
                 [585, 590, "#ffe6a7"],
                 [320, 582, "#bfefff"],
-              ].map(([cx, cy, fill], index) => (
+              ] as const).map(([cx, cy, fill], index) => (
                 <circle key={index} cx={cx} cy={cy} r="15" fill={fill} opacity="0.92" />
               ))}
             </g>
@@ -279,14 +279,14 @@ export function ElsyJellyfish({
             </g>
 
             <g className="elsy-sparks">
-              {[
+              {([
                 [282, 240, 5, "#fff6cc"],
                 [638, 222, 7, "#ffffff"],
                 [684, 308, 4, "#fff6cc"],
                 [238, 360, 8, "#ffffff"],
                 [618, 410, 5, "#fff6cc"],
                 [315, 426, 6, "#ffffff"],
-              ].map(([cx, cy, r, fill], index) => (
+              ] as const).map(([cx, cy, r, fill], index) => (
                 <circle key={index} cx={cx} cy={cy} r={r} fill={fill} opacity="0.55" />
               ))}
             </g>

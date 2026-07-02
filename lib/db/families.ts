@@ -62,6 +62,15 @@ export async function updateFamily(id: string, updates: Record<string, unknown>)
   }
 }
 
+export async function restartFamilySettingsOnboarding(id: string) {
+  await updateFamily(id, {
+    onboarding_step: "preferred_time",
+    preferred_time: null,
+    timezone: null,
+    dinner_conversation_opt_in: false,
+  });
+}
+
 /** 1-based rank by signup date. Returns null if family not found. */
 export async function getFamilyCohortRank(familyId: string): Promise<number | null> {
   const { data: family, error: familyError } = await supabaseAdmin
