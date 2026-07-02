@@ -1,0 +1,20 @@
+{
+  "name": "daily-quest-hourly-production",
+  "provider": "external-http-scheduler",
+  "reason": "The production Vercel project is on Hobby, where Vercel Cron cannot run more than once per day. Daily quests need an hourly trigger so families receive quests during their preferred local hour.",
+  "request": {
+    "method": "GET",
+    "url": "https://elsey.app/api/cron/daily-quest",
+    "headers": [
+      {
+        "name": "Authorization",
+        "value": "Bearer ${CRON_SECRET}"
+      }
+    ]
+  },
+  "schedule": {
+    "cron": "0 * * * *",
+    "timezone": "UTC",
+    "description": "Run once per hour at minute 0."
+  }
+}

@@ -15,12 +15,49 @@ const START_KEYWORDS = new Set(["start", "unstop", "yes"]);
 
 const QUEST_REQUEST_KEYWORDS = new Set([
   "quest",
+  "quest please",
   "quest now",
   "new quest",
+  "new quest please",
   "send quest",
   "start quest",
   "today's quest",
   "todays quest",
+  "mission",
+  "mission please",
+  "mission now",
+  "new mission",
+  "new mission please",
+  "send mission",
+  "start mission",
+  "today's mission",
+  "todays mission",
+]);
+
+const QUEST_REQUEST_PATTERNS = [
+  /^(?:please )?(?:send|start|give me|make|create) (?:a )?(?:new |today's |todays )?(?:quest|mission)(?: please)?$/,
+  /^(?:can|could) (?:i|we) (?:get|have|start) (?:a )?(?:new |today's |todays )?(?:quest|mission)(?: please)?\??$/,
+  /^i(?:'d| would) like (?:a )?(?:new |today's |todays )?(?:quest|mission)(?: please)?$/,
+];
+
+const QUESTION_STARTERS = new Set([
+  "am",
+  "are",
+  "can",
+  "could",
+  "did",
+  "do",
+  "does",
+  "how",
+  "is",
+  "should",
+  "what",
+  "when",
+  "where",
+  "who",
+  "why",
+  "will",
+  "would",
 ]);
 
 export function normalizeSmsBody(body: string): string {
@@ -44,7 +81,25 @@ export function isHelloKeyword(body: string): boolean {
 }
 
 export function isQuestRequestKeyword(body: string): boolean {
-  return QUEST_REQUEST_KEYWORDS.has(normalizeSmsBody(body));
+  const normalizedBody = normalizeSmsBody(body);
+  return (
+    QUEST_REQUEST_KEYWORDS.has(normalizedBody) ||
+    QUEST_REQUEST_PATTERNS.some((pattern) => pattern.test(normalizedBody))
+  );
+}
+
+export function isLikelySmsQuestion(body: string): boolean {
+  const normalizedBody = normalizeSmsBody(body);
+  if (!normalizedBody) {
+    return false;
+  }
+
+  if (normalizedBody.endsWith("?")) {
+    return true;
+  }
+
+  const [firstWord] = normalizedBody.split(" ");
+  return QUESTION_STARTERS.has(firstWord ?? "");
 }
 
 export function getStopConfirmation(): string {

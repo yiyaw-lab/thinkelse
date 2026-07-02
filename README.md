@@ -175,13 +175,32 @@ npx supabase migration repair --status applied 20250613120000
    - Portal: **Messaging → 10DLC → Campaigns** → your campaign → **Assign Numbers**
    - Inbound can work before this step; **outbound US A2P will fail** until the number is linked.
 
-### Daily quest cron (Hobby / free Vercel)
+### Daily quest scheduler (production)
 
-Vercel Hobby only allows **one cron per day**, but Else checks preferred times hourly. Use an external scheduler (e.g. [cron-job.org](https://cron-job.org)) to `GET` your cron endpoint every hour:
+Production is deployed to Vercel Hobby, where Vercel Cron can only run once per day. Do **not** add an hourly `vercel.json` cron on Hobby; deployment will fail. Else needs an hourly production trigger because `/api/cron/daily-quest` checks each family's preferred local hour and skips families outside that hour.
+
+Configure an external HTTP scheduler, such as [cron-job.org](https://cron-job.org), from `scheduler.daily-quest.production.json`:
 
 ```
-https://elsey.app/api/cron/daily-quest
-Authorization: Bearer YOUR_CRON_SECRET
+Method: GET
+URL: https://elsey.app/api/cron/daily-quest
+Schedule: 0 * * * * (every hour, UTC)
+Header: Authorization: Bearer ${CRON_SECRET}
+```
+
+`CRON_SECRET` must be set in Vercel for Production and used as the external scheduler's secret value. Do not store the secret in this repository.
+
+If the Vercel project is upgraded to Pro, replace the external scheduler with this `vercel.json` config and deploy it:
+
+```json
+{
+  "crons": [
+    {
+      "path": "/api/cron/daily-quest",
+      "schedule": "0 * * * *"
+    }
+  ]
+}
 ```
 
 ### Quest review queue (first 50 families)

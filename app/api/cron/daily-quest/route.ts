@@ -37,13 +37,22 @@ function parsePreferredHour(preferredTime: string): number | null {
 }
 
 export async function GET(request: Request) {
-  // Verify the request comes from Vercel's cron system in production
+  // Production cron can be triggered by Vercel Cron or an external scheduler.
+  // Either way, require the shared bearer token configured as CRON_SECRET.
   const authHeader = request.headers.get("authorization");
-  if (
-    process.env.NODE_ENV === "production" &&
-    authHeader !== `Bearer ${process.env.CRON_SECRET}`
-  ) {
-    return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401 });
+  const cronSecret = process.env.CRON_SECRET;
+  if (process.env.NODE_ENV === "production") {
+    if (!cronSecret) {
+      console.error("CRON_SECRET is not configured for daily quest cron");
+      return NextResponse.json(
+        { ok: false, error: "Cron is not configured" },
+        { status: 500 },
+      );
+    }
+
+    if (authHeader !== `Bearer ${cronSecret}`) {
+      return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401 });
+    }
   }
 
   const now = new Date();

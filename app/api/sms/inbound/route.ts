@@ -38,7 +38,7 @@ import {
   formatInterpretationMessage,
   formatQuestMessage,
 } from "@/lib/sms/format-quest";
-import { isQuestRequestKeyword } from "@/lib/sms/keywords";
+import { isLikelySmsQuestion, isQuestRequestKeyword } from "@/lib/sms/keywords";
 import {
   checkAndRecordAction,
   checkInboundRateLimit,
@@ -126,6 +126,10 @@ async function createOnDemandQuestMessage(
   });
 
   return formatQuestMessage(generatedQuest);
+}
+
+function getQuestResponseGuidance(): string {
+  return "I can help with quests by text. Reply with what your child noticed from the latest quest, or reply QUEST for a new one. Reply HELP for support.";
 }
 
 async function sendKeywordReply(to: string, body: string, familyId?: string | null) {
@@ -246,25 +250,29 @@ async function handleInboundMessage(from: string, body: string) {
         const latestQuest = await getLatestQuestForChild(child.id);
 
         if (latestQuest) {
-          const interpretationLimit = await checkAndRecordAction({
-            phone: from,
-            familyId: existingFamily.id,
-            eventType: "interpretation_request",
-            bodyLength: body.length,
-          });
-
-          if (!interpretationLimit.allowed) {
-            replyText =
-              "Elsy needs a little time before another coaching reply. Please pause and try again later.";
+          if (isLikelySmsQuestion(body)) {
+            replyText = getQuestResponseGuidance();
           } else {
-            await updateQuestResponse(latestQuest.id, body, latestQuest.completed_at);
+            const interpretationLimit = await checkAndRecordAction({
+              phone: from,
+              familyId: existingFamily.id,
+              eventType: "interpretation_request",
+              bodyLength: body.length,
+            });
 
-            const interpretation = await interpretResponse(
-              await buildInterpretContext(existingFamily, child, latestQuest, body),
-            );
+            if (!interpretationLimit.allowed) {
+              replyText =
+                "Elsy needs a little time before another coaching reply. Please pause and try again later.";
+            } else {
+              await updateQuestResponse(latestQuest.id, body, latestQuest.completed_at);
 
-            replyText = formatInterpretationMessage(interpretation);
-            await saveElsyReply(latestQuest.id, replyText);
+              const interpretation = await interpretResponse(
+                await buildInterpretContext(existingFamily, child, latestQuest, body),
+              );
+
+              replyText = formatInterpretationMessage(interpretation);
+              await saveElsyReply(latestQuest.id, replyText);
+            }
           }
         } else {
           replyText = "You're all set. Elsy will send your first quest at your preferred time. Reply QUEST if you'd like one now.";
