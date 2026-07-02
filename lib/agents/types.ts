@@ -7,6 +7,8 @@ export type QuestHistoryEntry = {
   skill: string | null;
   response: string | null;
   elsyReply: string | null;
+  missionStatus: string | null;
+  completedAt: string | null;
   createdAt: string;
 };
 

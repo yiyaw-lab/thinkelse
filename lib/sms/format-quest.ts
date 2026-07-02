@@ -4,13 +4,16 @@ import type { InterpretedResponse } from "@/lib/agents/interpretResponse";
 export function formatQuestMessage(quest: GeneratedQuest): string {
   return `🌱 ${quest.title}
 
+Ask:
 ${quest.prompt}
 
-Mission:
+Try:
 ${quest.mission}
 
-Think about:
-${quest.followUp}`;
+Later:
+${quest.followUp}
+
+Reply with what they noticed.`;
 }
 
 export function formatInterpretationMessage(result: InterpretedResponse): string {

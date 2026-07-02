@@ -3,7 +3,7 @@
 import dynamic from "next/dynamic";
 
 const ElsyJellyfish = dynamic(
-  () => import("./elsy-jellyfish").then((mod) => mod.ElsyJellyfish),
+  () => import("./elsy-jellyfish-3d").then((mod) => mod.ElsyJellyfish3D),
   {
     ssr: false,
     loading: () => (

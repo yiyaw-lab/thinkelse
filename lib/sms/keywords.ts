@@ -13,6 +13,53 @@ const HELP_KEYWORDS = new Set(["help", "info"]);
 
 const START_KEYWORDS = new Set(["start", "unstop", "yes"]);
 
+const QUEST_REQUEST_KEYWORDS = new Set([
+  "quest",
+  "quest please",
+  "quest now",
+  "new quest",
+  "new quest please",
+  "send quest",
+  "start quest",
+  "today's quest",
+  "todays quest",
+  "mission",
+  "mission please",
+  "mission now",
+  "new mission",
+  "new mission please",
+  "send mission",
+  "start mission",
+  "today's mission",
+  "todays mission",
+]);
+
+const QUEST_REQUEST_PATTERNS = [
+  /^(?:please )?(?:send|start|give me|make|create) (?:a )?(?:new |today's |todays )?(?:quest|mission)(?: please)?$/,
+  /^(?:can|could) (?:i|we) (?:get|have|start) (?:a )?(?:new |today's |todays )?(?:quest|mission)(?: please)?\??$/,
+  /^i(?:'d| would) like (?:a )?(?:new |today's |todays )?(?:quest|mission)(?: please)?$/,
+];
+
+const QUESTION_STARTERS = new Set([
+  "am",
+  "are",
+  "can",
+  "could",
+  "did",
+  "do",
+  "does",
+  "how",
+  "is",
+  "should",
+  "what",
+  "when",
+  "where",
+  "who",
+  "why",
+  "will",
+  "would",
+]);
+
 export function normalizeSmsBody(body: string): string {
   return body.trim().toLowerCase().replace(/\s+/g, " ");
 }
@@ -33,18 +80,40 @@ export function isHelloKeyword(body: string): boolean {
   return normalizeSmsBody(body) === "hello";
 }
 
+export function isQuestRequestKeyword(body: string): boolean {
+  const normalizedBody = normalizeSmsBody(body);
+  return (
+    QUEST_REQUEST_KEYWORDS.has(normalizedBody) ||
+    QUEST_REQUEST_PATTERNS.some((pattern) => pattern.test(normalizedBody))
+  );
+}
+
+export function isLikelySmsQuestion(body: string): boolean {
+  const normalizedBody = normalizeSmsBody(body);
+  if (!normalizedBody) {
+    return false;
+  }
+
+  if (normalizedBody.endsWith("?")) {
+    return true;
+  }
+
+  const [firstWord] = normalizedBody.split(" ");
+  return QUESTION_STARTERS.has(firstWord ?? "");
+}
+
 export function getStopConfirmation(): string {
   return "You've been unsubscribed from Else SMS. You won't receive more messages. Reply START to rejoin. Msg & data rates may apply.";
 }
 
 export function getHelpMessage(): string {
-  return `Else SMS Program: daily curiosity quests for your family. Msg frequency varies (typically 1–3/day). Msg & data rates may apply. Reply STOP to opt out. Support: ${SITE.email} · ${SITE.url}/start`;
+  return `Else SMS Program: daily ask/try/later curiosity quests and optional dinner questions for family conversation. Reply QUEST after onboarding. Msg frequency varies (typically 1–3/day). Msg & data rates may apply. Reply STOP to opt out. Support: ${SITE.email} · ${SITE.url}/start`;
 }
 
 export function getStartConfirmation(): string {
-  return `Welcome back to Else! You're re-subscribed to the ${SITE.name} SMS program. Elsy will resume your daily quests at your preferred time. Reply STOP anytime to opt out.`;
+  return `Welcome back to Else! You're re-subscribed to the ${SITE.name} SMS program. Elsy will resume your daily curiosity quests at your preferred time. Reply STOP anytime to opt out.`;
 }
 
 export function getAlreadySubscribedMessage(): string {
-  return "You're already subscribed to Else. Elsy will send your next quest at your preferred time — reply anytime with your child's thinking. Reply STOP to opt out, HELP for help.";
+  return "You're already subscribed to Else. Elsy will send your next quest at your preferred time, or reply QUEST for one now. Reply STOP to opt out, HELP for help.";
 }

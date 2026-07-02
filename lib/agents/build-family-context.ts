@@ -23,6 +23,8 @@ type QuestRow = {
   skill: string | null;
   response: string | null;
   elsy_reply?: string | null;
+  mission_status?: string | null;
+  completed_at?: string | null;
   created_at: string;
 };
 
@@ -34,6 +36,8 @@ function mapQuestHistory(quests: QuestRow[]): QuestHistoryEntry[] {
     skill: quest.skill,
     response: quest.response,
     elsyReply: quest.elsy_reply ?? null,
+    missionStatus: quest.mission_status ?? null,
+    completedAt: quest.completed_at ?? null,
     createdAt: quest.created_at,
   }));
 }

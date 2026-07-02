@@ -108,11 +108,13 @@ docs/
 
 ```
 families  ──→  children  ──→  quests
+    └────→  sms_guardrail_events
 ```
 
-- **families** — phone, parent name, preferred quest time, timezone, SMS opt-in status, onboarding step
+- **families** — phone, parent name, preferred quest time, timezone, SMS opt-in status, dinner conversation preference, onboarding step
 - **children** — name, age, interests (linked to a family)
-- **quests** — prompt, mission, follow-up, skill, child response (linked to a child)
+- **quests** — prompt, mission, follow-up, skill, mission completion status, child response (linked to a child)
+- **sms_guardrail_events** — per-phone/family SMS guardrail counters and blocked-event reasons, without storing message content
 
 ## Local development
 
@@ -173,18 +175,38 @@ npx supabase migration repair --status applied 20250613120000
    - Portal: **Messaging → 10DLC → Campaigns** → your campaign → **Assign Numbers**
    - Inbound can work before this step; **outbound US A2P will fail** until the number is linked.
 
-### Daily quest cron (Hobby / free Vercel)
+### Daily quest scheduler (production)
 
-Vercel Hobby only allows **one cron per day**, but Else checks preferred times hourly. Use an external scheduler (e.g. [cron-job.org](https://cron-job.org)) to `GET` your cron endpoint every hour:
+Production is deployed to Vercel Hobby, where Vercel Cron can only run once per day. Do **not** add an hourly `vercel.json` cron on Hobby; deployment will fail. Else needs an hourly production trigger because `/api/cron/daily-quest` checks each family's preferred local hour and skips families outside that hour.
+
+Configure an external HTTP scheduler, such as [cron-job.org](https://cron-job.org), from `scheduler.daily-quest.production.json`:
 
 ```
-https://elsey.app/api/cron/daily-quest
-Authorization: Bearer YOUR_CRON_SECRET
+Method: GET
+URL: https://elsey.app/api/cron/daily-quest
+Schedule: 0 * * * * (every hour, UTC)
+Header: Authorization: Bearer ${CRON_SECRET}
+```
+
+`CRON_SECRET` must be set in Vercel for Production and used as the external scheduler's secret value. Do not store the secret in this repository.
+
+If the Vercel project is upgraded to Pro, replace the external scheduler with this `vercel.json` config and deploy it:
+
+```json
+{
+  "crons": [
+    {
+      "path": "/api/cron/daily-quest",
+      "schedule": "0 * * * *"
+    }
+  ]
+}
 ```
 
 ### Quest review queue (first 50 families)
 
 Quests from the first 50 families are flagged `review_status: pending` for human QA.
+Mission completion is tracked separately with `mission_status` and `completed_at`; review actions should not be used for family progress counts.
 
 **Web UI:** [https://elsey.app/admin/review](https://elsey.app/admin/review) (enter `ADMIN_SECRET`)
 
@@ -209,12 +231,36 @@ Inbound SMS handles standard keywords before quest logic:
 - **HELP** (also INFO) — sends program help text
 - **START** (also UNSTOP, YES) — re-subscribes opted-out families
 - **HELLO** — re-subscribes if opted out; otherwise treated as onboarding for new numbers
+- **QUEST** (also QUEST NOW, NEW QUEST, SEND QUEST, START QUEST, TODAY'S QUEST) — sends an on-demand quest after onboarding is complete
+
+### SMS abuse guardrails
+
+The inbound webhook keeps compliance keywords (`STOP`, `HELP`, `START`, `HELLO`) ahead of normal throttles, then applies practical limits before any OpenAI work:
+
+- Telnyx webhook payloads over 64 KB are rejected before JSON parsing.
+- SMS message bodies over 1,000 characters are not processed into onboarding, quests, or interpretation.
+- Non-keyword inbound messages are limited per phone.
+- On-demand `QUEST` requests are limited and also skip if that child already has a quest for the local day.
+- Interpretation replies and outbound sends are throttled per phone.
+- Onboarding inputs are bounded: short parent/child names, child ages 5-12, up to 6 short interests, and explicit `am`/`pm` preferred times.
+
+Guardrail counters are stored in `sms_guardrail_events` with event type, status, reason, body length, phone, and optional family id. Message content is not stored in the guardrail table.
 
 ### Timezone-aware daily quests
 
-Onboarding now asks for US timezone after preferred send time. The hourly cron matches each family's **local hour** (not UTC) and skips families who already received a quest that local day.
+Onboarding asks for US timezone after preferred send time, then asks whether the family wants optional dinner questions for richer family conversation. The dinner preference is persisted as `families.dinner_conversation_opt_in` for a future table-time delivery flow; daily quest delivery is unchanged for now.
+
+Completing onboarding does not send a quest automatically; families can reply **QUEST** for one immediately, or wait for the hourly cron. The cron matches each family's **local hour** (not UTC) and skips families who already received a quest that local day.
 
 Apply migration `20250613160000_sms_opt_in_and_timezone.sql` in Supabase if not auto-deployed.
+Apply migration `20260627045600_dinner_conversation_opt_in.sql` to add the dinner preference column.
+Apply migration `20260626220504_sms_abuse_guardrails.sql` to add SMS guardrail event logging and indexes.
+
+### Mission completion persistence
+
+New quests start as `mission_status: assigned`. After onboarding is complete, a non-keyword parent SMS reply to the latest quest saves the response and marks that quest `mission_status: completed` with `completed_at`. This gives future dashboards a stable count of completed missions without conflating family progress with `review_status`.
+
+Apply migration `20250613170000_quest_completion_status.sql` in Supabase if not auto-deployed.
 
 ## API routes
 

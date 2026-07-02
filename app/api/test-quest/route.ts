@@ -17,6 +17,8 @@ const SAMPLE_CONTEXT: FamilyQuestContext = {
       skill: "observation",
       response: "Her shadow was longest before dinner.",
       elsyReply: "Sharp noticing — what do you think made the shadow stretch that long?",
+      missionStatus: "completed",
+      completedAt: "2026-06-12T18:15:00Z",
       createdAt: "2026-06-12T08:00:00Z",
     },
     {
@@ -26,6 +28,8 @@ const SAMPLE_CONTEXT: FamilyQuestContext = {
       skill: "listening",
       response: "She heard a bird and a truck backup beep.",
       elsyReply: null,
+      missionStatus: "completed",
+      completedAt: "2026-06-11T08:20:00Z",
       createdAt: "2026-06-11T08:00:00Z",
     },
   ],

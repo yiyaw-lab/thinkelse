@@ -95,7 +95,8 @@ export default function TermsPage() {
             </p>
             <p>
               <strong>Message types:</strong> onboarding messages, daily curiosity
-              quests, Elsy&rsquo;s replies, and occasional service or account notices.
+              quests, optional dinner conversation questions, Elsy&rsquo;s replies, and
+              occasional service or account notices.
             </p>
             <p>
               <strong>Message frequency:</strong> {LEGAL.messageFrequency}.

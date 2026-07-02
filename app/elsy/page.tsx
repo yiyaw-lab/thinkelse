@@ -5,8 +5,8 @@ import { ElsyJellyfishSketch } from "@/components/brand/elsy-jellyfish-sketch";
 import { pageMetadata } from "@/lib/site";
 
 export const metadata: Metadata = pageMetadata({
-  title: "Elsy jellyfish sketch",
-  description: "3D motion study — Elsy as a moon jelly curiosity companion.",
+  title: "Elsy moon jelly mascot",
+  description: "Blender-authored character study — Elsy as an irresistibly gentle moon jelly companion.",
   path: "/elsy",
 });
 
@@ -18,7 +18,7 @@ export default function ElsySketchPage() {
           <Link href="/" className="text-sm font-semibold hover:text-pool-blue">
             ← Else
           </Link>
-          <p className="text-xs text-pool-muted">3D motion sketch</p>
+          <p className="text-xs text-pool-muted">Blender GLB motion study</p>
         </div>
       </header>
 
@@ -26,8 +26,8 @@ export default function ElsySketchPage() {
         <p className="pool-eyebrow mb-3">Character study</p>
         <h1 className="pool-display-sm mb-4">Elsy, moon jelly.</h1>
         <p className="pool-lead mb-10 max-w-2xl">
-          Translucent bell, bioluminescent pulse, ribbon tendrils. She drifts in with
-          questions — no stingers, no screen, just wonder.
+          Sculpted moon-jelly silhouette, glossy expression-safe eyes, shy hello pulse,
+          ribbon tendril wave. She drifts in with questions — no stingers, no screen, just wonder.
         </p>
 
         <ElsyJellyfishSketch />
@@ -35,15 +35,15 @@ export default function ElsySketchPage() {
         <div className="grid gap-4 text-sm text-pool-muted sm:grid-cols-3">
           <div className="pool-panel">
             <p className="mb-1 font-semibold text-pool-ink">Bell</p>
-            <p>Transmission glass + inner glow. Gentle pulse like breathing.</p>
+            <p>Blender-authored pearlescent shell with a soft sculpted rim and breathing morphs.</p>
           </div>
           <div className="pool-panel">
             <p className="mb-1 font-semibold text-pool-ink">Tendrils</p>
-            <p>Seven soft ribbons with phase-offset sway — curiosity reaching.</p>
+            <p>Five named ribbons with rounded tips, clear negative space, and delayed follow-through.</p>
           </div>
           <div className="pool-panel">
             <p className="mb-1 font-semibold text-pool-ink">Motion</p>
-            <p>Float, bloom, sparkles. Respects reduced-motion preferences.</p>
+            <p>Notice, inhale, squash, cheek glow, smile, tendril wave, rebound, settle, and reduced-motion support.</p>
           </div>
         </div>
       </main>
