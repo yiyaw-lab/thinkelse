@@ -129,7 +129,19 @@ async function createOnDemandQuestMessage(
 }
 
 function getQuestResponseGuidance(): string {
-  return "I can help with quests by text. Reply with what your child noticed from the latest quest, or reply QUEST for a new one. Reply HELP for support.";
+  return "I can help with quests by text. Reply with what your child noticed from the active quest, reply QUEST or NEW MISSION for a new one, or reply SETTINGS to update your daily time.";
+}
+
+function isQuestAwaitingResponse(quest: {
+  response?: string | null;
+  mission_status?: string | null;
+  completed_at?: string | null;
+}): boolean {
+  return (
+    quest.mission_status !== "completed" &&
+    !quest.completed_at &&
+    !quest.response?.trim()
+  );
 }
 
 async function sendKeywordReply(to: string, body: string, familyId?: string | null) {
@@ -249,7 +261,7 @@ async function handleInboundMessage(from: string, body: string) {
       } else if (child) {
         const latestQuest = await getLatestQuestForChild(child.id);
 
-        if (latestQuest) {
+        if (latestQuest && isQuestAwaitingResponse(latestQuest)) {
           if (isLikelySmsQuestion(body)) {
             replyText = getQuestResponseGuidance();
           } else {
@@ -274,8 +286,12 @@ async function handleInboundMessage(from: string, body: string) {
               await saveElsyReply(latestQuest.id, replyText);
             }
           }
+        } else if (latestQuest) {
+          replyText =
+            "I already saved the latest quest response. Reply QUEST or NEW MISSION for a new one, SETTINGS to update your daily time, or HELP for support.";
         } else {
-          replyText = "You're all set. Elsy will send your first quest at your preferred time. Reply QUEST if you'd like one now.";
+          replyText =
+            "You're all set. Elsy will send your first quest at your preferred time. Reply QUEST or NEW MISSION if you'd like one now.";
         }
       }
     } else {
