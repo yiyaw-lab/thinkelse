@@ -138,6 +138,18 @@ export function getLocalHour(timezone: string, date = new Date()): number {
   return getLocalTimeParts(timezone, date).hour;
 }
 
+export function isPreferredDeliveryWindow(
+  preferredTime: PreferredTimeParts,
+  localTime: PreferredTimeParts,
+): boolean {
+  if (preferredTime.hour !== localTime.hour) {
+    return false;
+  }
+
+  const minuteDelta = localTime.minute - preferredTime.minute;
+  return minuteDelta >= 0 && minuteDelta < 30;
+}
+
 export function formatLocalDateKey(timezone: string, date = new Date()): string {
   const safeTimezone = timezone || DEFAULT_TIMEZONE;
 

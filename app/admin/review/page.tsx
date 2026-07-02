@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
+import { DeliveryStatusPanel } from "@/components/admin/delivery-status-panel";
 import { ReviewQueuePanel } from "@/components/admin/review-queue-panel";
 import { pageMetadata } from "@/lib/site";
 
@@ -30,7 +31,10 @@ export default function AdminReviewPage() {
         <p className="mb-8 text-sm text-pool-muted">
           QA quests from the first 50 families before scaling outbound quality.
         </p>
-        <ReviewQueuePanel />
+        <div className="space-y-10">
+          <ReviewQueuePanel />
+          <DeliveryStatusPanel />
+        </div>
       </main>
     </div>
   );
