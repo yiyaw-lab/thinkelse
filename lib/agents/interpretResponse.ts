@@ -1,6 +1,11 @@
 import { openai } from "@/lib/openai";
 
-import { ELSY_SYSTEM_PROMPT, formatQuestHistory, getAgeGuidance } from "./elsy-system";
+import {
+  ELSY_SYSTEM_PROMPT,
+  formatFamilyLearning,
+  formatQuestHistory,
+  getAgeGuidance,
+} from "./elsy-system";
 import { validateInterpretation } from "./quest-quality";
 import type { InterpretContext } from "./types";
 
@@ -40,6 +45,9 @@ What the child noticed/said (via parent):
 
 Recent family arc (optional context — don't recap at length):
 ${formatQuestHistory(context.recentQuests)}
+
+Durable family learning (optional context — adapt tone and future-facing suggestions when useful):
+${formatFamilyLearning(context.learningEvents)}
 
 Write for SMS to the parent. They may read your follow-up question aloud to ${context.childName}.
 

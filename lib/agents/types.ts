@@ -1,5 +1,13 @@
 import type { TemporalContext } from "./temporal-context";
 
+export type FamilyLearningContextEntry = {
+  kind: string;
+  summary: string;
+  evidence?: string | null;
+  confidence?: number | null;
+  created_at?: string;
+};
+
 export type QuestHistoryEntry = {
   title: string | null;
   prompt: string;
@@ -19,6 +27,7 @@ export type FamilyQuestContext = {
   interests: string[];
   questNumber: number;
   recentQuests: QuestHistoryEntry[];
+  learningEvents: FamilyLearningContextEntry[];
   temporal: TemporalContext;
 };
 
@@ -34,4 +43,20 @@ export type InterpretContext = {
   questSkill: string | null;
   childResponse: string;
   recentQuests: QuestHistoryEntry[];
+  learningEvents: FamilyLearningContextEntry[];
+};
+
+export type QuestReplyLearningContext = {
+  parentName: string | null;
+  childName: string;
+  age: number | null;
+  interests: string[];
+  questTitle: string | null;
+  questPrompt: string;
+  questMission: string;
+  questFollowUp: string;
+  questSkill: string | null;
+  replyText: string;
+  recentQuests: QuestHistoryEntry[];
+  learningEvents: FamilyLearningContextEntry[];
 };

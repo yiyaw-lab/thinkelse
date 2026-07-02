@@ -108,13 +108,15 @@ docs/
 
 ```
 families  ──→  children  ──→  quests
-    └────→  sms_guardrail_events
+    ├────→  sms_guardrail_events
+    └────→  family_learning_events
 ```
 
 - **families** — phone, parent name, preferred quest time, timezone, SMS opt-in status, dinner conversation preference, onboarding step
 - **children** — name, age, interests (linked to a family)
 - **quests** — prompt, mission, follow-up, skill, mission completion status, child response (linked to a child)
 - **sms_guardrail_events** — per-phone/family SMS guardrail counters and blocked-event reasons, without storing message content
+- **family_learning_events** — durable personalization notes extracted from family replies, suggestions, preferences, avoidances, and successful quest patterns
 
 ## Local development
 
@@ -242,9 +244,12 @@ Apply migration `20260626220504_sms_abuse_guardrails.sql` to add SMS guardrail e
 
 ### Mission completion persistence
 
-New quests start as `mission_status: assigned`. After onboarding is complete, a non-keyword parent SMS reply to the latest quest saves the response and marks that quest `mission_status: completed` with `completed_at`. This gives future dashboards a stable count of completed missions without conflating family progress with `review_status`.
+New quests start as `mission_status: assigned`. After onboarding is complete, a non-keyword parent SMS reply to the latest quest is classified before Elsy acts on it. Child-response replies save the response and mark that quest `mission_status: completed` with `completed_at`. Feedback-only replies, such as requests for shorter quests or more building activities, are acknowledged and stored as `family_learning_events` without completing the active quest. This gives future dashboards a stable count of completed missions without conflating family progress with `review_status`.
+
+Future quest generation reads recent `family_learning_events` alongside quest history, so Elsy can tune quests toward what worked, honor parent preferences, and avoid patterns the family disliked.
 
 Apply migration `20250613170000_quest_completion_status.sql` in Supabase if not auto-deployed.
+Apply migration `20260702211407_family_learning_events.sql` to add durable family learning.
 
 ## API routes
 

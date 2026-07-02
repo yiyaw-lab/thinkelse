@@ -15,6 +15,14 @@ const SAMPLE_INTERPRET: InterpretContext = {
   questSkill: "observation",
   childResponse: "Her shadow was longest before dinner and pointed toward the kitchen.",
   recentQuests: [],
+  learningEvents: [
+    {
+      kind: "family_preference",
+      summary: "Parent likes short follow-up questions that can be read aloud.",
+      evidence: "short follow-up questions",
+      confidence: 0.75,
+    },
+  ],
 };
 
 export async function GET() {

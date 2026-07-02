@@ -3,9 +3,11 @@ import { NextResponse } from "next/server";
 
 import { generateQuest } from "@/lib/agents/generateQuest";
 import { interpretResponse } from "@/lib/agents/interpretResponse";
+import { learnFromQuestReply } from "@/lib/agents/learnFromReply";
 import {
   buildInterpretContext,
   buildQuestContext,
+  buildQuestReplyLearningContext,
 } from "@/lib/agents/build-family-context";
 import {
   getOnboardingReply,
@@ -31,6 +33,7 @@ import {
   saveElsyReply,
   updateQuestResponse,
 } from "@/lib/db/quests";
+import { saveFamilyLearningEvents } from "@/lib/db/family-learning";
 import { reviewStatusForFamily } from "@/lib/quests/review-policy";
 import { handleSmsKeyword } from "@/lib/sms/handle-keyword";
 import { sendSms } from "@/lib/telnyx/sendSms";
@@ -38,7 +41,11 @@ import {
   formatInterpretationMessage,
   formatQuestMessage,
 } from "@/lib/sms/format-quest";
-import { isLikelySmsQuestion, isQuestRequestKeyword } from "@/lib/sms/keywords";
+import {
+  isLikelySmsQuestion,
+  isQuestRequestKeyword,
+  normalizeSmsBody,
+} from "@/lib/sms/keywords";
 import {
   checkAndRecordAction,
   checkInboundRateLimit,
@@ -142,6 +149,52 @@ function isQuestAwaitingResponse(quest: {
     !quest.completed_at &&
     !quest.response?.trim()
   );
+}
+
+function appendLearningAcknowledgement(message: string, acknowledgement: string) {
+  const trimmed = acknowledgement.trim();
+  if (!trimmed) return message;
+  return `${message}\n\n${trimmed}`;
+}
+
+function isLikelyFeedbackOrPreference(body: string) {
+  const normalizedBody = normalizeSmsBody(body);
+
+  return (
+    /\b(prefer|preference|suggestion|feedback|for future|next time)\b/.test(
+      normalizedBody,
+    ) ||
+    /^(?:please )?(?:make|try|send|avoid|use) (?:future |the |these |more |less |shorter |longer |harder |easier )?(?:quests?|missions?)/.test(
+      normalizedBody,
+    ) ||
+    /^(?:can|could) you (?:make|try|send|avoid|use) /.test(normalizedBody)
+  );
+}
+
+async function saveFallbackParentNote({
+  familyId,
+  childId,
+  questId,
+  body,
+}: {
+  familyId: string;
+  childId: string;
+  questId: string;
+  body: string;
+}) {
+  await saveFamilyLearningEvents({
+    familyId,
+    childId,
+    questId,
+    events: [
+      {
+        kind: "parent_note",
+        summary: `Parent note for future quest tuning: ${body}`,
+        evidence: body,
+        confidence: 0.35,
+      },
+    ],
+  });
 }
 
 async function sendKeywordReply(to: string, body: string, familyId?: string | null) {
@@ -262,28 +315,101 @@ async function handleInboundMessage(from: string, body: string) {
         const latestQuest = await getLatestQuestForChild(child.id);
 
         if (latestQuest && isQuestAwaitingResponse(latestQuest)) {
-          if (isLikelySmsQuestion(body)) {
-            replyText = getQuestResponseGuidance();
+          const interpretationLimit = await checkAndRecordAction({
+            phone: from,
+            familyId: existingFamily.id,
+            eventType: "interpretation_request",
+            bodyLength: body.length,
+          });
+
+          if (!interpretationLimit.allowed) {
+            replyText =
+              "Elsy needs a little time before another coaching reply. Please pause and try again later.";
           } else {
-            const interpretationLimit = await checkAndRecordAction({
-              phone: from,
-              familyId: existingFamily.id,
-              eventType: "interpretation_request",
-              bodyLength: body.length,
-            });
-
-            if (!interpretationLimit.allowed) {
-              replyText =
-                "Elsy needs a little time before another coaching reply. Please pause and try again later.";
-            } else {
-              await updateQuestResponse(latestQuest.id, body, latestQuest.completed_at);
-
-              const interpretation = await interpretResponse(
-                await buildInterpretContext(existingFamily, child, latestQuest, body),
+            try {
+              const learning = await learnFromQuestReply(
+                await buildQuestReplyLearningContext(
+                  existingFamily,
+                  child,
+                  latestQuest,
+                  body,
+                ),
               );
 
-              replyText = formatInterpretationMessage(interpretation);
-              await saveElsyReply(latestQuest.id, replyText);
+              if (learning.memories.length > 0) {
+                await saveFamilyLearningEvents({
+                  familyId: existingFamily.id,
+                  childId: child.id,
+                  questId: latestQuest.id,
+                  events: learning.memories,
+                });
+              }
+
+              if (learning.completeQuest && learning.childResponse) {
+                await updateQuestResponse(
+                  latestQuest.id,
+                  learning.childResponse,
+                  latestQuest.completed_at,
+                );
+
+                const interpretation = await interpretResponse(
+                  await buildInterpretContext(
+                    existingFamily,
+                    child,
+                    latestQuest,
+                    learning.childResponse,
+                  ),
+                );
+
+                replyText = appendLearningAcknowledgement(
+                  formatInterpretationMessage(interpretation),
+                  learning.acknowledgement,
+                );
+                await saveElsyReply(latestQuest.id, replyText);
+              } else if (learning.memories.length > 0) {
+                replyText =
+                  learning.acknowledgement ||
+                  "Got it - I'll remember that for future quests.";
+              } else if (isLikelyFeedbackOrPreference(body)) {
+                await saveFallbackParentNote({
+                  familyId: existingFamily.id,
+                  childId: child.id,
+                  questId: latestQuest.id,
+                  body,
+                });
+                replyText = "Got it - I'll remember that for future quests.";
+              } else if (
+                learning.replyKind === "question_or_support" ||
+                isLikelySmsQuestion(body)
+              ) {
+                replyText = getQuestResponseGuidance();
+              } else {
+                replyText =
+                  "I may have missed the child response. Reply with what your child noticed, or reply QUEST or NEW MISSION for a new one.";
+              }
+            } catch (learningError) {
+              console.error("learnFromQuestReply error:", learningError);
+
+              if (isLikelyFeedbackOrPreference(body)) {
+                await saveFallbackParentNote({
+                  familyId: existingFamily.id,
+                  childId: child.id,
+                  questId: latestQuest.id,
+                  body,
+                });
+                replyText = "Got it - I'll remember that for future quests.";
+              } else if (isLikelySmsQuestion(body)) {
+                replyText = getQuestResponseGuidance();
+              } else {
+                await updateQuestResponse(latestQuest.id, body, latestQuest.completed_at);
+
+                const interpretation = await interpretResponse(
+                  await buildInterpretContext(existingFamily, child, latestQuest, body),
+                );
+
+                replyText = formatInterpretationMessage(interpretation);
+                await saveElsyReply(latestQuest.id, replyText);
+              }
             }
           }
         } else if (latestQuest) {
