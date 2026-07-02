@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Caveat, Inter, Playfair_Display } from "next/font/google";
 import "./globals.css";
+import { Analytics } from "@vercel/analytics/next";
 
 import { rootMetadata, SITE } from "@/lib/site";
 
@@ -59,7 +60,10 @@ export default function RootLayout({
       lang="en"
       className={`${playfair.variable} ${inter.variable} ${caveat.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col">
+        {children}
+        <Analytics />
+      </body>
     </html>
   );
 }
