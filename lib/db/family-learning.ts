@@ -13,6 +13,7 @@ export type FamilyLearningEvent = {
   summary: string;
   evidence?: string | null;
   confidence?: number | null;
+  child_id?: string | null;
   created_at?: string;
 };
 
@@ -74,13 +75,23 @@ export async function saveFamilyLearningEvents({
   return true;
 }
 
-export async function getRecentFamilyLearningEvents(familyId: string, limit = 12) {
-  const { data, error } = await supabaseAdmin
+export async function getRecentFamilyLearningEvents(
+  familyId: string,
+  limit = 12,
+  childId?: string | null,
+) {
+  let query = supabaseAdmin
     .from("family_learning_events")
-    .select("kind, summary, evidence, confidence, created_at")
+    .select("kind, summary, evidence, confidence, child_id, created_at")
     .eq("family_id", familyId)
     .order("created_at", { ascending: false })
     .limit(limit);
+
+  if (childId) {
+    query = query.or(`child_id.is.null,child_id.eq.${childId}`);
+  }
+
+  const { data, error } = await query;
 
   if (error) {
     console.error("getRecentFamilyLearningEvents error:", error);

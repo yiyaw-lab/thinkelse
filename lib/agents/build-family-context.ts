@@ -56,7 +56,7 @@ export async function buildQuestContext(
   const [recentQuests, questCount, learningEvents] = await Promise.all([
     getRecentQuestsForChild(child.id, 8),
     countQuestsForChild(child.id),
-    getRecentFamilyLearningEvents(family.id, 12),
+    getRecentFamilyLearningEvents(family.id, 12, child.id),
   ]);
 
   const temporal = getTemporalContext(new Date(), family.preferred_time);
@@ -81,7 +81,7 @@ export async function buildInterpretContext(
 ): Promise<InterpretContext> {
   const [recentQuests, learningEvents] = await Promise.all([
     getRecentQuestsForChild(child.id, 5),
-    getRecentFamilyLearningEvents(family.id, 12),
+    getRecentFamilyLearningEvents(family.id, 12, child.id),
   ]);
 
   return {
@@ -108,7 +108,7 @@ export async function buildQuestReplyLearningContext(
 ): Promise<QuestReplyLearningContext> {
   const [recentQuests, learningEvents] = await Promise.all([
     getRecentQuestsForChild(child.id, 5),
-    getRecentFamilyLearningEvents(family.id, 12),
+    getRecentFamilyLearningEvents(family.id, 12, child.id),
   ]);
 
   return {
