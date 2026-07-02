@@ -33,8 +33,8 @@ function isPreferredDeliveryWindow(
 }
 
 export async function GET(request: Request) {
-  // Production cron can be triggered by Vercel Cron or an external scheduler.
-  // Either way, require the shared bearer token configured as CRON_SECRET.
+  // Production cron is configured in vercel.json. Require the shared bearer
+  // token configured as CRON_SECRET so manual requests cannot trigger delivery.
   const authHeader = request.headers.get("authorization");
   const cronSecret = process.env.CRON_SECRET;
   if (process.env.NODE_ENV === "production") {

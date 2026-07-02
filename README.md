@@ -29,7 +29,7 @@ There are two entry points. **Inbound SMS** (`/api/sms/inbound`) is a Telnyx
 webhook that verifies the signature, then either runs SMS compliance keywords
 (STOP / HELP / START), advances the onboarding state machine, or interprets a
 child's response and replies. **The daily-quest cron** (`/api/cron/daily-quest`)
-is polled every 30 minutes (an external scheduler on Vercel Hobby), matches each
+is invoked every 30 minutes by Vercel Cron, matches each
 family's local hour and minute against their preferred time, generates a quest,
 and sends it. Quests from the first 50 families are flagged `pending` for human
 QA via the admin review queue (`/admin/review` + `/api/admin/review-queue`).
@@ -38,7 +38,7 @@ QA via the admin review queue (`/admin/review` + `/api/admin/review-queue`).
 flowchart TD
     Parent([Parent's phone])
     Telnyx[Telnyx SMS]
-    Scheduler[30-minute external scheduler]
+    Scheduler[30-minute Vercel Cron]
 
     subgraph App[Next.js app on Vercel]
         Inbound["/api/sms/inbound<br/>(verify + route)"]
@@ -177,31 +177,14 @@ npx supabase migration repair --status applied 20250613120000
 
 ### Daily quest scheduler (production)
 
-Production is deployed to Vercel Hobby, where Vercel Cron can only run once per day. Do **not** add a 30-minute `vercel.json` cron on Hobby; deployment will fail. Else needs a 30-minute production trigger because `/api/cron/daily-quest` checks each family's preferred local hour and minute and skips families outside that window.
+Production is deployed to the Coaur Vercel Pro team, so scheduled delivery uses native Vercel Cron in `vercel.json`:
 
-Configure an external HTTP scheduler, such as [cron-job.org](https://cron-job.org), from `scheduler.daily-quest.production.json`:
-
-```
-Method: GET
-URL: https://elsey.app/api/cron/daily-quest
+```txt
+Path: /api/cron/daily-quest
 Schedule: 0,30 * * * * (every 30 minutes, UTC)
-Header: Authorization: Bearer ${CRON_SECRET}
 ```
 
-`CRON_SECRET` must be set in Vercel for Production and used as the external scheduler's secret value. Do not store the secret in this repository. The scheduler must run every 30 minutes because onboarding accepts whole-hour and half-hour daily quest times, and `/api/cron/daily-quest` only sends when the family's preferred local hour and minute match.
-
-If the Vercel project is upgraded to Pro, replace the external scheduler with this `vercel.json` config and deploy it:
-
-```json
-{
-  "crons": [
-    {
-      "path": "/api/cron/daily-quest",
-      "schedule": "0,30 * * * *"
-    }
-  ]
-}
-```
+`CRON_SECRET` must be set in Vercel for Production. Do not store the secret in this repository. The cron runs every 30 minutes because onboarding accepts whole-hour and half-hour daily quest times, and `/api/cron/daily-quest` only sends when the family's preferred local hour and minute match. The route also skips families who already received a quest that local day.
 
 ### Quest review queue (first 50 families)
 
@@ -231,7 +214,8 @@ Inbound SMS handles standard keywords before quest logic:
 - **HELP** (also INFO) — sends program help text
 - **START** (also UNSTOP, YES) — re-subscribes opted-out families
 - **HELLO** — re-subscribes if opted out; otherwise treated as onboarding for new numbers
-- **QUEST** (also QUEST NOW, NEW QUEST, SEND QUEST, START QUEST, TODAY'S QUEST) — sends an on-demand quest after onboarding is complete
+- **QUEST** / **NEW MISSION** (also QUEST NOW, NEW QUEST, ANOTHER QUEST, NEXT MISSION, SEND QUEST, START MISSION, TODAY'S QUEST) — sends an on-demand quest after onboarding is complete
+- **SETTINGS** (also SETUP, CHANGE TIME, UPDATE TIMEZONE, RESET ONBOARDING) — restarts the daily-time/timezone setup for completed families
 
 ### SMS abuse guardrails
 
