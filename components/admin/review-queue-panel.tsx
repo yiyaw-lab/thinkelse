@@ -1,9 +1,10 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
 import type { PendingReviewQuest, QuestReviewStatus } from "@/lib/db/quests";
 
 const STORAGE_KEY = "else_admin_secret";
+const STORAGE_EVENT = "else-admin-secret-change";
 
 type QueueResponse = {
   ok: boolean;
@@ -13,8 +14,27 @@ type QueueResponse = {
   error?: string;
 };
 
+function getStoredSecret() {
+  if (typeof window === "undefined") return "";
+  return sessionStorage.getItem(STORAGE_KEY) ?? "";
+}
+
+function subscribeToStoredSecret(onStoreChange: () => void) {
+  window.addEventListener("storage", onStoreChange);
+  window.addEventListener(STORAGE_EVENT, onStoreChange);
+
+  return () => {
+    window.removeEventListener("storage", onStoreChange);
+    window.removeEventListener(STORAGE_EVENT, onStoreChange);
+  };
+}
+
+function notifyStoredSecretChanged() {
+  window.dispatchEvent(new Event(STORAGE_EVENT));
+}
+
 export function ReviewQueuePanel() {
-  const [secret, setSecret] = useState("");
+  const secret = useSyncExternalStore(subscribeToStoredSecret, getStoredSecret, () => "");
   const [inputSecret, setInputSecret] = useState("");
   const [quests, setQuests] = useState<PendingReviewQuest[]>([]);
   const [pending, setPending] = useState(0);
@@ -23,17 +43,7 @@ export function ReviewQueuePanel() {
   const [error, setError] = useState<string | null>(null);
   const [notes, setNotes] = useState<Record<string, string>>({});
 
-  useEffect(() => {
-    const saved = sessionStorage.getItem(STORAGE_KEY);
-    if (saved) {
-      setSecret(saved);
-    }
-  }, []);
-
   const loadQueue = useCallback(async (token: string) => {
-    setLoading(true);
-    setError(null);
-
     try {
       const response = await fetch("/api/admin/review-queue", {
         headers: { Authorization: `Bearer ${token}` },
@@ -44,6 +54,7 @@ export function ReviewQueuePanel() {
         throw new Error(data.error ?? "Failed to load review queue");
       }
 
+      setError(null);
       setQuests(data.quests ?? []);
       setPending(data.pending ?? 0);
       setCohortLimit(data.cohortLimit ?? 50);
@@ -58,9 +69,15 @@ export function ReviewQueuePanel() {
   }, []);
 
   useEffect(() => {
-    if (secret) {
+    if (!secret) return;
+
+    const timeoutId = window.setTimeout(() => {
+      setLoading(true);
+      setError(null);
       void loadQueue(secret);
-    }
+    }, 0);
+
+    return () => window.clearTimeout(timeoutId);
   }, [secret, loadQueue]);
 
   function saveSecret(event: React.FormEvent) {
@@ -68,15 +85,18 @@ export function ReviewQueuePanel() {
     const trimmed = inputSecret.trim();
     if (!trimmed) return;
     sessionStorage.setItem(STORAGE_KEY, trimmed);
-    setSecret(trimmed);
+    notifyStoredSecretChanged();
     setInputSecret("");
+    setLoading(true);
+    setError(null);
   }
 
   function signOut() {
     sessionStorage.removeItem(STORAGE_KEY);
-    setSecret("");
+    notifyStoredSecretChanged();
     setQuests([]);
     setError(null);
+    setLoading(false);
   }
 
   async function reviewQuest(questId: string, status: QuestReviewStatus) {
@@ -153,7 +173,11 @@ export function ReviewQueuePanel() {
         <div className="flex gap-2">
           <button
             type="button"
-            onClick={() => void loadQueue(secret)}
+            onClick={() => {
+              setLoading(true);
+              setError(null);
+              void loadQueue(secret);
+            }}
             className="btn-pool-secondary text-sm"
             disabled={loading}
           >
