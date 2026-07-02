@@ -8,6 +8,7 @@ import {
   getSettingsRestartMessage,
   getStartConfirmation,
   getStopConfirmation,
+  isAddChildKeyword,
   isHelloKeyword,
   isHelpKeyword,
   isSettingsKeyword,
@@ -99,6 +100,28 @@ export async function handleSmsKeyword(
     return {
       handled: true,
       reply: `You're unsubscribed from Else SMS. Reply START to rejoin, or HELP for support.`,
+      stopProcessing: true,
+    };
+  }
+
+  if (isAddChildKeyword(body)) {
+    if (!family) {
+      return { handled: false };
+    }
+
+    if (family.onboarding_step !== "complete") {
+      return {
+        handled: true,
+        reply:
+          "You're still setting up Else. Finish this child first, then reply ADD CHILD to add another.",
+        stopProcessing: true,
+      };
+    }
+
+    await updateFamily(family.id, { onboarding_step: "additional_child_name" });
+    return {
+      handled: true,
+      reply: "Let's add another child. What is their first name or nickname?",
       stopProcessing: true,
     };
   }

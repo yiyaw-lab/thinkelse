@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { generateQuest } from "@/lib/agents/generateQuest";
 import { buildQuestContext } from "@/lib/agents/build-family-context";
 import { getCompleteFamilies } from "@/lib/db/families";
-import { getFirstChildForFamily } from "@/lib/db/children";
+import { getChildrenForFamily } from "@/lib/db/children";
 import { createQuest, hasQuestOnLocalDay } from "@/lib/db/quests";
 import { reviewStatusForFamily } from "@/lib/quests/review-policy";
 import { formatQuestMessage } from "@/lib/sms/format-quest";
@@ -54,7 +54,7 @@ export async function GET(request: Request) {
   const now = new Date();
   const families = await getCompleteFamilies();
 
-  const results: { phone: string; status: string }[] = [];
+  const results: { phone: string; child?: string; status: string }[] = [];
 
   for (const family of families) {
     if (!family.preferred_time || !family.phone) continue;
@@ -75,55 +75,69 @@ export async function GET(request: Request) {
       continue;
     }
 
-    const child = await getFirstChildForFamily(family.id);
-    if (!child) continue;
+    const children = await getChildrenForFamily(family.id);
+    if (children.length === 0) {
+      results.push({ phone: family.phone, status: "skipped_missing_child" });
+      continue;
+    }
 
     const localDateKey = formatLocalDateKey(timezone, now);
-    const alreadySentToday = await hasQuestOnLocalDay(
-      child.id,
-      localDateKey,
-      timezone,
-    );
 
-    if (alreadySentToday) {
-      results.push({ phone: family.phone, status: "skipped_already_sent" });
-      continue;
+    for (const child of children) {
+      const alreadySentToday = await hasQuestOnLocalDay(
+        child.id,
+        localDateKey,
+        timezone,
+      );
+
+      if (alreadySentToday) {
+        results.push({
+          phone: family.phone,
+          child: child.name,
+          status: "skipped_already_sent",
+        });
+        continue;
+      }
+
+      const outboundLimit = await checkOutboundRateLimit({
+        phone: family.phone,
+        familyId: family.id,
+        bodyLength: 0,
+      });
+
+      if (!outboundLimit.allowed) {
+        results.push({
+          phone: family.phone,
+          child: child.name,
+          status: `skipped_${outboundLimit.reason}`,
+        });
+        continue;
+      }
+
+      const questContext = await buildQuestContext(family, child);
+      const generatedQuest = await generateQuest(questContext);
+      const reviewStatus = await reviewStatusForFamily(family.id);
+      const message = formatQuestMessage(generatedQuest, child.name);
+
+      await createQuest({
+        childId: child.id,
+        title: generatedQuest.title,
+        prompt: generatedQuest.prompt,
+        mission: generatedQuest.mission,
+        followUp: generatedQuest.followUp,
+        skill: generatedQuest.skill,
+        reviewStatus,
+      });
+
+      await sendSms(family.phone, message);
+      await recordOutboundSent({
+        phone: family.phone,
+        familyId: family.id,
+        bodyLength: message.length,
+      });
+
+      results.push({ phone: family.phone, child: child.name, status: "sent" });
     }
-
-    const outboundLimit = await checkOutboundRateLimit({
-      phone: family.phone,
-      familyId: family.id,
-      bodyLength: 0,
-    });
-
-    if (!outboundLimit.allowed) {
-      results.push({ phone: family.phone, status: `skipped_${outboundLimit.reason}` });
-      continue;
-    }
-
-    const questContext = await buildQuestContext(family, child);
-    const generatedQuest = await generateQuest(questContext);
-    const reviewStatus = await reviewStatusForFamily(family.id);
-    const message = formatQuestMessage(generatedQuest);
-
-    await createQuest({
-      childId: child.id,
-      title: generatedQuest.title,
-      prompt: generatedQuest.prompt,
-      mission: generatedQuest.mission,
-      followUp: generatedQuest.followUp,
-      skill: generatedQuest.skill,
-      reviewStatus,
-    });
-
-    await sendSms(family.phone, message);
-    await recordOutboundSent({
-      phone: family.phone,
-      familyId: family.id,
-      bodyLength: message.length,
-    });
-
-    results.push({ phone: family.phone, status: "sent" });
   }
 
   return NextResponse.json({

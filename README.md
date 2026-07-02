@@ -12,10 +12,10 @@ Help parents raise thoughtful children in the AI age, one tiny curiosity quest a
 ## The Else loop
 
 1. A parent texts the Else number to get started
-2. Elsy onboards the family — learning the child's name, age, and interests
-3. Elsy sends a personalized curiosity quest every day at a preferred time
-4. The parent shares their child's response via SMS
-5. Elsy interprets the response, offers a warm follow-up, and grows with the child
+2. Elsy onboards the family — learning each child's name, age, and interests
+3. Elsy sends personalized curiosity quests at the family's preferred time
+4. The parent shares each child's response via SMS
+5. Elsy interprets the response, offers a warm follow-up, and grows with each child
 
 ## How it works
 
@@ -27,12 +27,13 @@ SMS in both directions.
 
 There are two entry points. **Inbound SMS** (`/api/sms/inbound`) is a Telnyx
 webhook that verifies the signature, then either runs SMS compliance keywords
-(STOP / HELP / START), advances the onboarding state machine, or interprets a
-child's response and replies. **The daily-quest cron** (`/api/cron/daily-quest`)
-is invoked every 30 minutes by Vercel Cron, matches each
-family's local hour and minute against their preferred time, generates a quest,
-and sends it. Quests from the first 50 families are flagged `pending` for human
-QA via the admin review queue (`/admin/review` + `/api/admin/review-queue`).
+(STOP / HELP / START), advances the onboarding state machine, adds child
+profiles, or interprets a child-specific response and replies. **The daily-quest
+cron** (`/api/cron/daily-quest`) is invoked every 30 minutes by Vercel Cron,
+matches each family's local hour and minute against their preferred time,
+generates one age- and interest-tuned quest per child, and sends it. Quests from
+the first 50 families are flagged `pending` for human QA via the admin review
+queue (`/admin/review` + `/api/admin/review-queue`).
 
 ```mermaid
 flowchart TD
@@ -108,13 +109,15 @@ docs/
 
 ```
 families  ──→  children  ──→  quests
-    └────→  sms_guardrail_events
+    ├────→  sms_guardrail_events
+    └────→  family_learning_events
 ```
 
 - **families** — phone, parent name, preferred quest time, timezone, SMS opt-in status, dinner conversation preference, onboarding step
-- **children** — name, age, interests (linked to a family)
+- **children** — one profile per child, with name, age, and interests (linked to a family)
 - **quests** — prompt, mission, follow-up, skill, mission completion status, child response (linked to a child)
 - **sms_guardrail_events** — per-phone/family SMS guardrail counters and blocked-event reasons, without storing message content
+- **family_learning_events** — durable personalization notes extracted from family replies, suggestions, preferences, avoidances, and successful quest patterns
 
 ## Local development
 
@@ -184,7 +187,7 @@ Path: /api/cron/daily-quest
 Schedule: 0,30 * * * * (every 30 minutes, UTC)
 ```
 
-`CRON_SECRET` must be set in Vercel for Production. Do not store the secret in this repository. The cron runs every 30 minutes because onboarding accepts whole-hour and half-hour daily quest times, and `/api/cron/daily-quest` only sends when the family's preferred local hour and minute match. The route also skips families who already received a quest that local day.
+`CRON_SECRET` must be set in Vercel for Production. Do not store the secret in this repository. The cron runs every 30 minutes because onboarding accepts whole-hour and half-hour daily quest times, and `/api/cron/daily-quest` only sends when the family's preferred local hour and minute match. The route sends each child profile at most one quest per local day.
 
 ### Quest review queue (first 50 families)
 
@@ -215,6 +218,8 @@ Inbound SMS handles standard keywords before quest logic:
 - **START** (also UNSTOP, YES) — re-subscribes opted-out families
 - **HELLO** — re-subscribes if opted out; otherwise treated as onboarding for new numbers
 - **QUEST** / **NEW MISSION** (also QUEST NOW, NEW QUEST, ANOTHER QUEST, NEXT MISSION, SEND QUEST, START MISSION, TODAY'S QUEST) — sends an on-demand quest after onboarding is complete
+- **QUEST FOR [child name]** / **NEW MISSION FOR [child name]** — sends an on-demand quest for a specific child profile
+- **ADD CHILD** (also ADD ANOTHER CHILD, NEW CHILD, ADD KID, ADD SIBLING) — adds another child profile with its own age and interests
 - **SETTINGS** (also SETUP, CHANGE TIME, UPDATE TIMEZONE, RESET ONBOARDING) — restarts the daily-time/timezone setup for completed families
 
 ### SMS abuse guardrails
@@ -234,17 +239,21 @@ Guardrail counters are stored in `sms_guardrail_events` with event type, status,
 
 Onboarding asks for US timezone after preferred send time, then asks whether the family wants optional dinner questions for richer family conversation. The dinner preference is persisted as `families.dinner_conversation_opt_in` for a future table-time delivery flow; daily quest delivery is unchanged for now.
 
-Completing onboarding does not send a quest automatically; families can reply **QUEST** or **NEW MISSION** for one immediately, or wait for the 30-minute scheduler. The scheduler matches each family's **local hour and minute** (not UTC) and skips families who already received a quest that local day.
+Completing onboarding does not send a quest automatically; families can reply **QUEST**, **NEW MISSION**, or **QUEST FOR [child name]** for one immediately, or wait for the 30-minute scheduler. The scheduler matches each family's **local hour and minute** (not UTC) and skips child profiles who already received a quest that local day.
 
 Apply migration `20250613160000_sms_opt_in_and_timezone.sql` in Supabase if not auto-deployed.
 Apply migration `20260627045600_dinner_conversation_opt_in.sql` to add the dinner preference column.
 Apply migration `20260626220504_sms_abuse_guardrails.sql` to add SMS guardrail event logging and indexes.
+Apply migration `20260702212301_child_personalization_indexes.sql` to add multi-child routing indexes.
 
 ### Mission completion persistence
 
-New quests start as `mission_status: assigned`. After onboarding is complete, a non-keyword parent SMS reply to the latest quest saves the response and marks that quest `mission_status: completed` with `completed_at`. This gives future dashboards a stable count of completed missions without conflating family progress with `review_status`.
+New quests start as `mission_status: assigned`. After onboarding is complete, a non-keyword parent SMS reply to an active quest is classified before Elsy acts on it. If only one child has an active quest, Elsy can route the reply directly. If multiple children have active quests, the parent should prefix the reply with the child name, such as `Mira: she noticed the shadow moved`. Child-response replies save the response and mark that child's quest `mission_status: completed` with `completed_at`. Feedback-only replies, such as requests for shorter quests or more building activities, are acknowledged and stored as `family_learning_events` without completing the active quest. This gives future dashboards a stable count of completed missions without conflating family progress with `review_status`.
+
+Future quest generation reads recent child-specific `family_learning_events` alongside that child's quest history, so Elsy can tune quests toward what worked, honor parent preferences, and avoid patterns the family disliked.
 
 Apply migration `20250613170000_quest_completion_status.sql` in Supabase if not auto-deployed.
+Apply migration `20260702211407_family_learning_events.sql` to add durable family learning.
 
 ## API routes
 

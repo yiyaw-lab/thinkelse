@@ -1,10 +1,12 @@
 import type { GeneratedQuest } from "@/lib/agents/generateQuest";
 import type { InterpretedResponse } from "@/lib/agents/interpretResponse";
 
-export function formatQuestMessage(quest: GeneratedQuest): string {
+export function formatQuestMessage(quest: GeneratedQuest, childName?: string | null): string {
+  const childLine = childName ? `For ${childName}\n` : "";
+
   return `🌱 ${quest.title}
 
-Ask:
+${childLine}Ask:
 ${quest.prompt}
 
 Try:

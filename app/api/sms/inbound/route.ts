@@ -3,9 +3,11 @@ import { NextResponse } from "next/server";
 
 import { generateQuest } from "@/lib/agents/generateQuest";
 import { interpretResponse } from "@/lib/agents/interpretResponse";
+import { learnFromQuestReply } from "@/lib/agents/learnFromReply";
 import {
   buildInterpretContext,
   buildQuestContext,
+  buildQuestReplyLearningContext,
 } from "@/lib/agents/build-family-context";
 import {
   getOnboardingReply,
@@ -21,16 +23,19 @@ import {
 } from "@/lib/db/families";
 import {
   createChild,
-  getFirstChildForFamily,
-  updateChildrenForFamily,
+  getChildrenForFamily,
+  getLatestChildForFamily,
+  updateChild,
 } from "@/lib/db/children";
 import {
   createQuest,
-  getLatestQuestForChild,
+  getAwaitingQuestsForChildren,
+  getLatestQuestForChildren,
   hasQuestOnLocalDay,
   saveElsyReply,
   updateQuestResponse,
 } from "@/lib/db/quests";
+import { saveFamilyLearningEvents } from "@/lib/db/family-learning";
 import { reviewStatusForFamily } from "@/lib/quests/review-policy";
 import { handleSmsKeyword } from "@/lib/sms/handle-keyword";
 import { sendSms } from "@/lib/telnyx/sendSms";
@@ -38,7 +43,11 @@ import {
   formatInterpretationMessage,
   formatQuestMessage,
 } from "@/lib/sms/format-quest";
-import { isLikelySmsQuestion, isQuestRequestKeyword } from "@/lib/sms/keywords";
+import {
+  isLikelySmsQuestion,
+  isQuestRequestKeyword,
+  normalizeSmsBody,
+} from "@/lib/sms/keywords";
 import {
   checkAndRecordAction,
   checkInboundRateLimit,
@@ -70,26 +79,98 @@ type TelnyxInboundWebhook = {
   };
 };
 
-async function createOnDemandQuestMessage(
-  family: NonNullable<Awaited<ReturnType<typeof findFamilyByPhone>>>,
-): Promise<string> {
-  const child = await getFirstChildForFamily(family.id);
+type FamilyRow = NonNullable<Awaited<ReturnType<typeof findFamilyByPhone>>>;
+type ChildRow = Awaited<ReturnType<typeof getChildrenForFamily>>[number];
+type QuestRow = Awaited<ReturnType<typeof getAwaitingQuestsForChildren>>[number];
 
-  if (!child) {
-    return "You're all set, but I need your child's profile before I can make a quest.";
+function childNameList(children: ChildRow[]) {
+  return children.map((child) => child.name).join(", ");
+}
+
+function normalizeChildName(name: string) {
+  return normalizeSmsBody(name).replace(/[^\p{L}\p{N} ]/gu, "");
+}
+
+function escapeRegExp(value: string) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function findNamedChild(children: ChildRow[], body: string) {
+  const normalizedBody = normalizeSmsBody(body);
+
+  return (
+    children.find((child) => {
+      const childName = normalizeChildName(child.name);
+      if (!childName) return false;
+
+      return new RegExp(`\\b${escapeRegExp(childName)}\\b`, "i").test(
+        normalizedBody,
+      );
+    }) ?? null
+  );
+}
+
+function splitChildPrefixedReply(children: ChildRow[], body: string) {
+  const trimmed = body.trim();
+
+  for (const child of children) {
+    const pattern = new RegExp(
+      `^\\s*${escapeRegExp(child.name)}\\s*(?::|-|,|—)\\s*(.+)$`,
+      "iu",
+    );
+    const match = trimmed.match(pattern);
+    const replyText = match?.[1]?.trim();
+
+    if (replyText) {
+      return { child, replyText };
+    }
   }
 
+  return null;
+}
+
+function childForQuest(quest: QuestRow, children: ChildRow[]) {
+  return children.find((child) => child.id === quest.child_id) ?? null;
+}
+
+async function createOnDemandQuestMessage(
+  family: FamilyRow,
+  requestBody: string,
+): Promise<string> {
+  const children = await getChildrenForFamily(family.id);
+
+  if (children.length === 0) {
+    return "You're all set, but I need a child profile before I can make a quest. Reply ADD CHILD to add one.";
+  }
+
+  const namedChild = findNamedChild(children, requestBody);
+
+  if (!namedChild && children.length > 1 && /\bfor\b/i.test(requestBody)) {
+    return `I don't have a child by that name yet. Children I have: ${childNameList(children)}. Reply ADD CHILD to add another profile, or QUEST FOR one of those names.`;
+  }
+
+  const candidateChildren = namedChild ? [namedChild] : children;
   const timezone =
     typeof family.timezone === "string" && family.timezone
       ? family.timezone
       : DEFAULT_TIMEZONE;
-  const alreadySentToday = await hasQuestOnLocalDay(
-    child.id,
-    formatLocalDateKey(timezone, new Date()),
-    timezone,
-  );
+  const localDateKey = formatLocalDateKey(timezone, new Date());
+  let child: ChildRow | null = null;
 
-  if (alreadySentToday) {
+  for (const candidate of candidateChildren) {
+    const alreadySentToday = await hasQuestOnLocalDay(
+      candidate.id,
+      localDateKey,
+      timezone,
+    );
+
+    if (!alreadySentToday) {
+      child = candidate;
+      break;
+    }
+  }
+
+  if (!child) {
     await logSmsGuardrailEvent({
       phone: family.phone,
       familyId: family.id,
@@ -98,7 +179,11 @@ async function createOnDemandQuestMessage(
       reason: "quest_already_sent_today",
     });
 
-    return "Elsy has already sent today's quest. Try it together, then reply with what your child noticed.";
+    if (namedChild) {
+      return `Elsy has already sent today's quest for ${namedChild.name}. Try it together, then reply "${namedChild.name}: ..." with what they noticed.`;
+    }
+
+    return "Elsy has already sent today's quests for the child profiles I have. Try one together, then reply with the child's name and what they noticed.";
   }
 
   const questLimit = await checkAndRecordAction({
@@ -125,23 +210,57 @@ async function createOnDemandQuestMessage(
     reviewStatus,
   });
 
-  return formatQuestMessage(generatedQuest);
+  return formatQuestMessage(generatedQuest, child.name);
 }
 
 function getQuestResponseGuidance(): string {
-  return "I can help with quests by text. Reply with what your child noticed from the active quest, reply QUEST or NEW MISSION for a new one, or reply SETTINGS to update your daily time.";
+  return "I can help with quests by text. Reply with what your child noticed from the active quest. If more than one child has a mission, start with their name, like Mira: she noticed... Reply QUEST FOR a child name for a new one, ADD CHILD for another profile, or SETTINGS to update your daily time.";
 }
 
-function isQuestAwaitingResponse(quest: {
-  response?: string | null;
-  mission_status?: string | null;
-  completed_at?: string | null;
-}): boolean {
+function appendLearningAcknowledgement(message: string, acknowledgement: string) {
+  const trimmed = acknowledgement.trim();
+  if (!trimmed) return message;
+  return `${message}\n\n${trimmed}`;
+}
+
+function isLikelyFeedbackOrPreference(body: string) {
+  const normalizedBody = normalizeSmsBody(body);
+
   return (
-    quest.mission_status !== "completed" &&
-    !quest.completed_at &&
-    !quest.response?.trim()
+    /\b(prefer|preference|suggestion|feedback|for future|next time)\b/.test(
+      normalizedBody,
+    ) ||
+    /^(?:please )?(?:make|try|send|avoid|use) (?:future |the |these |more |less |shorter |longer |harder |easier )?(?:quests?|missions?)/.test(
+      normalizedBody,
+    ) ||
+    /^(?:can|could) you (?:make|try|send|avoid|use) /.test(normalizedBody)
   );
+}
+
+async function saveFallbackParentNote({
+  familyId,
+  childId,
+  questId,
+  body,
+}: {
+  familyId: string;
+  childId: string;
+  questId: string;
+  body: string;
+}) {
+  await saveFamilyLearningEvents({
+    familyId,
+    childId,
+    questId,
+    events: [
+      {
+        kind: "parent_note",
+        summary: `Parent note for future quest tuning: ${body}`,
+        evidence: body,
+        confidence: 0.35,
+      },
+    ],
+  });
 }
 
 async function sendKeywordReply(to: string, body: string, familyId?: string | null) {
@@ -187,6 +306,109 @@ async function sendGuardrailNotice(
   }
 
   await sendKeywordReply(to, body, familyId);
+}
+
+async function createQuestReplyMessage({
+  from,
+  family,
+  child,
+  quest,
+  body,
+}: {
+  from: string;
+  family: FamilyRow;
+  child: ChildRow;
+  quest: QuestRow;
+  body: string;
+}) {
+  const interpretationLimit = await checkAndRecordAction({
+    phone: from,
+    familyId: family.id,
+    eventType: "interpretation_request",
+    bodyLength: body.length,
+  });
+
+  if (!interpretationLimit.allowed) {
+    return "Elsy needs a little time before another coaching reply. Please pause and try again later.";
+  }
+
+  try {
+    const learning = await learnFromQuestReply(
+      await buildQuestReplyLearningContext(family, child, quest, body),
+    );
+
+    if (learning.memories.length > 0) {
+      await saveFamilyLearningEvents({
+        familyId: family.id,
+        childId: child.id,
+        questId: quest.id,
+        events: learning.memories,
+      });
+    }
+
+    if (learning.completeQuest && learning.childResponse) {
+      await updateQuestResponse(quest.id, learning.childResponse, quest.completed_at);
+
+      const interpretation = await interpretResponse(
+        await buildInterpretContext(family, child, quest, learning.childResponse),
+      );
+
+      const replyText = appendLearningAcknowledgement(
+        formatInterpretationMessage(interpretation),
+        learning.acknowledgement,
+      );
+      await saveElsyReply(quest.id, replyText);
+      return replyText;
+    }
+
+    if (learning.memories.length > 0) {
+      return (
+        learning.acknowledgement || "Got it - I'll remember that for future quests."
+      );
+    }
+
+    if (isLikelyFeedbackOrPreference(body)) {
+      await saveFallbackParentNote({
+        familyId: family.id,
+        childId: child.id,
+        questId: quest.id,
+        body,
+      });
+      return "Got it - I'll remember that for future quests.";
+    }
+
+    if (learning.replyKind === "question_or_support" || isLikelySmsQuestion(body)) {
+      return getQuestResponseGuidance();
+    }
+
+    return `I may have missed the child response. Reply with what ${child.name} noticed, or reply QUEST FOR ${child.name} for a new one.`;
+  } catch (learningError) {
+    console.error("learnFromQuestReply error:", learningError);
+
+    if (isLikelyFeedbackOrPreference(body)) {
+      await saveFallbackParentNote({
+        familyId: family.id,
+        childId: child.id,
+        questId: quest.id,
+        body,
+      });
+      return "Got it - I'll remember that for future quests.";
+    }
+
+    if (isLikelySmsQuestion(body)) {
+      return getQuestResponseGuidance();
+    }
+
+    await updateQuestResponse(quest.id, body, quest.completed_at);
+
+    const interpretation = await interpretResponse(
+      await buildInterpretContext(family, child, quest, body),
+    );
+
+    const replyText = formatInterpretationMessage(interpretation);
+    await saveElsyReply(quest.id, replyText);
+    return replyText;
+  }
 }
 
 async function handleOversizedMessage(from: string, bodyLength: number) {
@@ -254,45 +476,52 @@ async function handleInboundMessage(from: string, body: string) {
     const currentStep = existingFamily.onboarding_step;
 
     if (currentStep === "complete") {
-      const child = await getFirstChildForFamily(existingFamily.id);
+      const children = await getChildrenForFamily(existingFamily.id);
 
       if (isQuestRequestKeyword(body)) {
-        replyText = await createOnDemandQuestMessage(existingFamily);
-      } else if (child) {
-        const latestQuest = await getLatestQuestForChild(child.id);
+        replyText = await createOnDemandQuestMessage(existingFamily, body);
+      } else if (children.length > 0) {
+        const childIds = children.map((child) => child.id);
+        const awaitingQuests = await getAwaitingQuestsForChildren(childIds);
 
-        if (latestQuest && isQuestAwaitingResponse(latestQuest)) {
-          if (isLikelySmsQuestion(body)) {
-            replyText = getQuestResponseGuidance();
-          } else {
-            const interpretationLimit = await checkAndRecordAction({
-              phone: from,
-              familyId: existingFamily.id,
-              eventType: "interpretation_request",
-              bodyLength: body.length,
-            });
+        if (awaitingQuests.length > 0) {
+          const prefixedReply = splitChildPrefixedReply(children, body);
+          const namedChild = prefixedReply?.child ?? findNamedChild(children, body);
+          let targetQuest: QuestRow | null = null;
+          let targetChild: ChildRow | null = null;
+          const targetBody = prefixedReply?.replyText ?? body;
 
-            if (!interpretationLimit.allowed) {
-              replyText =
-                "Elsy needs a little time before another coaching reply. Please pause and try again later.";
-            } else {
-              await updateQuestResponse(latestQuest.id, body, latestQuest.completed_at);
-
-              const interpretation = await interpretResponse(
-                await buildInterpretContext(existingFamily, child, latestQuest, body),
-              );
-
-              replyText = formatInterpretationMessage(interpretation);
-              await saveElsyReply(latestQuest.id, replyText);
-            }
+          if (namedChild) {
+            targetQuest =
+              awaitingQuests.find((quest) => quest.child_id === namedChild.id) ?? null;
+            targetChild = targetQuest ? namedChild : null;
+          } else if (awaitingQuests.length === 1) {
+            targetQuest = awaitingQuests[0] ?? null;
+            targetChild = targetQuest ? childForQuest(targetQuest, children) : null;
           }
-        } else if (latestQuest) {
+
+          if (targetQuest && targetChild) {
+            replyText = await createQuestReplyMessage({
+              from,
+              family: existingFamily,
+              child: targetChild,
+              quest: targetQuest,
+              body: targetBody,
+            });
+          } else {
+            const exampleChild = children[0]?.name ?? "their name";
+            replyText = `Which child is this for? Reply with their name first, like "${exampleChild}: what they noticed." Children I have: ${childNameList(children)}.`;
+          }
+        } else if (await getLatestQuestForChildren(childIds)) {
           replyText =
-            "I already saved the latest quest response. Reply QUEST or NEW MISSION for a new one, SETTINGS to update your daily time, or HELP for support.";
+            "I already saved the latest quest response. Reply QUEST FOR a child name for a new one, ADD CHILD for another profile, SETTINGS to update your daily time, or HELP for support.";
         } else {
           replyText =
-            "You're all set. Elsy will send your first quest at your preferred time. Reply QUEST or NEW MISSION if you'd like one now.";
+            "You're all set. Elsy will send each child's first quest at your preferred time. Reply QUEST FOR a child name if you'd like one now.";
         }
+      } else {
+        replyText =
+          "You're all set, but I need a child profile before I can make a quest. Reply ADD CHILD to add one.";
       }
     } else {
       const validation = validateOnboardingInput(currentStep, body);
@@ -312,20 +541,29 @@ async function handleInboundMessage(from: string, body: string) {
         const validatedBody =
           typeof validation.value === "string" ? validation.value : body;
 
-        if (currentStep === "child_name") {
+        if (currentStep === "child_name" || currentStep === "additional_child_name") {
           await createChild(existingFamily.id, validation.value as string);
         }
 
-        if (currentStep === "child_age") {
-          await updateChildrenForFamily(existingFamily.id, {
-            age: validation.value as number,
-          });
+        if (currentStep === "child_age" || currentStep === "additional_child_age") {
+          const currentChild = await getLatestChildForFamily(existingFamily.id);
+          if (currentChild) {
+            await updateChild(currentChild.id, {
+              age: validation.value as number,
+            });
+          }
         }
 
-        if (currentStep === "child_interests") {
-          await updateChildrenForFamily(existingFamily.id, {
-            interests: validation.value as string[],
-          });
+        if (
+          currentStep === "child_interests" ||
+          currentStep === "additional_child_interests"
+        ) {
+          const currentChild = await getLatestChildForFamily(existingFamily.id);
+          if (currentChild) {
+            await updateChild(currentChild.id, {
+              interests: validation.value as string[],
+            });
+          }
         }
 
         if (currentStep === "timezone") {

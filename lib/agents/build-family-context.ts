@@ -1,9 +1,16 @@
 import { countQuestsForChild, getRecentQuestsForChild } from "@/lib/db/quests";
+import { getRecentFamilyLearningEvents } from "@/lib/db/family-learning";
 import { getTemporalContext } from "./temporal-context";
 
-import type { FamilyQuestContext, InterpretContext, QuestHistoryEntry } from "./types";
+import type {
+  FamilyQuestContext,
+  InterpretContext,
+  QuestHistoryEntry,
+  QuestReplyLearningContext,
+} from "./types";
 
 type FamilyRow = {
+  id: string;
   parent_name?: string | null;
   preferred_time?: string | null;
 };
@@ -46,9 +53,10 @@ export async function buildQuestContext(
   family: FamilyRow,
   child: ChildRow,
 ): Promise<FamilyQuestContext> {
-  const [recentQuests, questCount] = await Promise.all([
+  const [recentQuests, questCount, learningEvents] = await Promise.all([
     getRecentQuestsForChild(child.id, 8),
     countQuestsForChild(child.id),
+    getRecentFamilyLearningEvents(family.id, 12, child.id),
   ]);
 
   const temporal = getTemporalContext(new Date(), family.preferred_time);
@@ -60,6 +68,7 @@ export async function buildQuestContext(
     interests: child.interests ?? [],
     questNumber: questCount + 1,
     recentQuests: mapQuestHistory(recentQuests),
+    learningEvents,
     temporal,
   };
 }
@@ -70,7 +79,10 @@ export async function buildInterpretContext(
   quest: QuestRow,
   childResponse: string,
 ): Promise<InterpretContext> {
-  const recentQuests = await getRecentQuestsForChild(child.id, 5);
+  const [recentQuests, learningEvents] = await Promise.all([
+    getRecentQuestsForChild(child.id, 5),
+    getRecentFamilyLearningEvents(family.id, 12, child.id),
+  ]);
 
   return {
     parentName: family.parent_name ?? null,
@@ -84,5 +96,33 @@ export async function buildInterpretContext(
     questSkill: quest.skill,
     childResponse,
     recentQuests: mapQuestHistory(recentQuests),
+    learningEvents,
+  };
+}
+
+export async function buildQuestReplyLearningContext(
+  family: FamilyRow,
+  child: ChildRow,
+  quest: QuestRow,
+  replyText: string,
+): Promise<QuestReplyLearningContext> {
+  const [recentQuests, learningEvents] = await Promise.all([
+    getRecentQuestsForChild(child.id, 5),
+    getRecentFamilyLearningEvents(family.id, 12, child.id),
+  ]);
+
+  return {
+    parentName: family.parent_name ?? null,
+    childName: child.name,
+    age: child.age,
+    interests: child.interests ?? [],
+    questTitle: quest.title,
+    questPrompt: quest.prompt,
+    questMission: quest.mission,
+    questFollowUp: quest.follow_up ?? "",
+    questSkill: quest.skill,
+    replyText,
+    recentQuests: mapQuestHistory(recentQuests),
+    learningEvents,
   };
 }

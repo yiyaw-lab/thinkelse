@@ -2,6 +2,7 @@ import { openai } from "@/lib/openai";
 
 import {
   ELSY_SYSTEM_PROMPT,
+  formatFamilyLearning,
   formatQuestHistory,
   getAgeGuidance,
   suggestNextSkills,
@@ -57,6 +58,9 @@ ${getAgeGuidance(context.age)}
 Recent quests — do NOT repeat themes, settings, or skills; build forward if a prior response invites it:
 ${formatQuestHistory(context.recentQuests)}
 
+Durable family learning — use this to personalize future quests, honor preferences, repeat what worked, and avoid what did not:
+${formatFamilyLearning(context.learningEvents)}
+
 Prefer a fresh cognitive skill from: ${suggestNextSkills(context.recentQuests)}
 
 ${launchGuidance}
@@ -70,6 +74,7 @@ Quality bar:
 - skill: one primary cognitive skill trained today
 - weave in an interest when it fits naturally — never forced
 - if a recent child response is listed, optionally nod to their curiosity arc
+- if durable family learning lists preferences or avoidances, follow them unless they conflict with safety or the core real-world quest format
 - favor family conversation starters like "What makes you say that?", "What else could be true?", "How could we test it?", or "What would you change?"
 - concrete > abstract; kitchen, sidewalk, window, backyard > generic "nature"
 - dullness check: reject anything that could appear in a worksheet, generic activity book, or chatbot demo

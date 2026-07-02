@@ -33,6 +33,14 @@ const SAMPLE_CONTEXT: FamilyQuestContext = {
       createdAt: "2026-06-11T08:00:00Z",
     },
   ],
+  learningEvents: [
+    {
+      kind: "successful_pattern",
+      summary: "Mira engages when quests involve drawing or visible changes.",
+      evidence: "drawing and shadow quests got detailed replies",
+      confidence: 0.8,
+    },
+  ],
   temporal: {
     season: "summer",
     timeOfDay: "morning",

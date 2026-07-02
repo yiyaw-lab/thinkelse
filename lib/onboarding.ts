@@ -27,7 +27,11 @@ export function validateOnboardingInput(
 ): OnboardingValidation {
   const cleaned = cleanSmsInput(body);
 
-  if (step === "parent_name" || step === "child_name") {
+  if (
+    step === "parent_name" ||
+    step === "child_name" ||
+    step === "additional_child_name"
+  ) {
     if (!isReasonableName(cleaned)) {
       return {
         ok: false,
@@ -38,7 +42,7 @@ export function validateOnboardingInput(
     return { ok: true, value: cleaned };
   }
 
-  if (step === "child_age") {
+  if (step === "child_age" || step === "additional_child_age") {
     if (!/^\d{1,2}$/.test(cleaned)) {
       return {
         ok: false,
@@ -57,7 +61,7 @@ export function validateOnboardingInput(
     return { ok: true, value: age };
   }
 
-  if (step === "child_interests") {
+  if (step === "child_interests" || step === "additional_child_interests") {
     if (cleaned.length > MAX_INTERESTS_BODY_LENGTH) {
       return {
         ok: false,
@@ -127,6 +131,24 @@ export function getOnboardingReply(step: string | null, body: string) {
       return {
         nextStep: "preferred_time",
         reply: `Perfect. What time should Elsy send your daily curiosity quest? Example: 8am or 6:30pm.`,
+      };
+
+    case "additional_child_name":
+      return {
+        nextStep: "additional_child_age",
+        reply: `Beautiful. How old is ${body}?`,
+      };
+
+    case "additional_child_age":
+      return {
+        nextStep: "additional_child_interests",
+        reply: `Got it. What are 3 things this child is curious about or loves right now?`,
+      };
+
+    case "additional_child_interests":
+      return {
+        nextStep: "complete",
+        reply: `Added. I'll tune missions for each child's age and interests. Reply ADD CHILD to add another child, or QUEST FOR their name to request one now.`,
       };
 
     case "preferred_time":

@@ -54,7 +54,7 @@ export function getAgeGuidance(age: number | null): string {
 }
 
 export function formatQuestHistory(
-    recentQuests: Array<{
+  recentQuests: Array<{
     title: string | null;
     prompt: string;
     skill: string | null;
@@ -77,6 +77,28 @@ export function formatQuestHistory(
         ? ` — Elsy replied: "${quest.elsyReply.slice(0, 100)}"`
         : "";
       return `${index + 1}.${skill} ${label}${childNote}${elsyNote}`;
+    })
+    .join("\n");
+}
+
+export function formatFamilyLearning(
+  learningEvents: Array<{
+    kind: string;
+    summary: string;
+    evidence?: string | null;
+    confidence?: number | null;
+  }>,
+): string {
+  if (learningEvents.length === 0) {
+    return "No durable family learning yet.";
+  }
+
+  return learningEvents
+    .map((event, index) => {
+      const evidence = event.evidence ? ` Evidence: "${event.evidence.slice(0, 100)}"` : "";
+      const confidence =
+        typeof event.confidence === "number" ? ` Confidence: ${event.confidence}.` : "";
+      return `${index + 1}. [${event.kind}] ${event.summary}${evidence}${confidence}`;
     })
     .join("\n");
 }

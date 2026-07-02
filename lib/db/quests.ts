@@ -21,6 +21,53 @@ export async function getLatestQuestForChild(childId: string) {
   return data;
 }
 
+export async function getLatestQuestForChildren(childIds: string[]) {
+  if (childIds.length === 0) return null;
+
+  const { data, error } = await supabaseAdmin
+    .from("quests")
+    .select()
+    .in("child_id", childIds)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (error) {
+    console.error("getLatestQuestForChildren error:", error);
+    return null;
+  }
+
+  return data;
+}
+
+export async function getAwaitingQuestsForChildren(childIds: string[]) {
+  if (childIds.length === 0) return [];
+
+  const { data, error } = await supabaseAdmin
+    .from("quests")
+    .select()
+    .in("child_id", childIds)
+    .is("response", null)
+    .is("completed_at", null)
+    .neq("mission_status", "completed")
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    console.error("getAwaitingQuestsForChildren error:", error);
+    return [];
+  }
+
+  const latestByChild = new Map<string, NonNullable<typeof data>[number]>();
+
+  for (const quest of data ?? []) {
+    if (!latestByChild.has(quest.child_id)) {
+      latestByChild.set(quest.child_id, quest);
+    }
+  }
+
+  return [...latestByChild.values()];
+}
+
 export async function hasQuestOnLocalDay(
   childId: string,
   localDateKey: string,
