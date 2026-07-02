@@ -23,7 +23,9 @@ Everything runs on Next.js (App Router) on Vercel. Routes stay thin: each route
 hands off to the AI reasoning layer in `lib/agents`, the database helpers in
 `lib/db`, and the Telnyx helpers in `lib/telnyx`. Supabase (PostgreSQL) is the
 single source of truth; OpenAI generates and interprets quests; Telnyx carries
-SMS in both directions.
+SMS in both directions. Quest generation also draws from a typed
+evidence-informed technique catalog in `lib/agents/research-techniques.ts`,
+documented in `docs/EVIDENCE_INFORMED_TECHNIQUES.md`.
 
 There are two entry points. **Inbound SMS** (`/api/sms/inbound`) is a Telnyx
 webhook that verifies the signature, then either runs SMS compliance keywords
@@ -103,6 +105,7 @@ lib/
   onboarding.ts       — Onboarding state machine
 docs/
   ARCHITECTURE.md     — Architecture decisions
+  EVIDENCE_INFORMED_TECHNIQUES.md — Research-backed quest methodology catalog
 ```
 
 ## Data model

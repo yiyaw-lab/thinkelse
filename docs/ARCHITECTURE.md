@@ -11,6 +11,7 @@ Else is a text-based family cognition coach.
 5. Elsy classifies the reply before taking action.
 6. Child responses complete that child’s mission, get interpreted, and may also create durable memory.
 7. Feedback-only replies are acknowledged and stored as family learning without completing the active mission.
+8. Future quests draw from recent family learning and the evidence-informed technique catalog.
 
 ## Stack
 
@@ -27,8 +28,8 @@ Else is a text-based family cognition coach.
 - `app/api/health` — health check route
 - `lib/supabaseAdmin.ts` — server-side Supabase client
 - `lib/onboarding.ts` — onboarding state machine
-- `lib/agents` — AI reasoning layer, coming next
-- `lib/db` — database helpers, coming next
+- `lib/agents` — AI reasoning layer, including the research technique catalog
+- `lib/db` — database helpers
 - `docs` — architecture and product docs
 
 ## Architecture Principle
@@ -36,6 +37,9 @@ Else is a text-based family cognition coach.
 Routes should stay thin.
 
 Product intelligence lives in `lib/agents`.
+
+Evidence-informed quest methodology lives in `lib/agents/research-techniques.ts`
+and is documented in `docs/EVIDENCE_INFORMED_TECHNIQUES.md`.
 
 Database operations live in `lib/db`.
 
