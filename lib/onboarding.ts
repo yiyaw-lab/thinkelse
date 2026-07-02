@@ -91,13 +91,16 @@ export function validateOnboardingInput(
     return { ok: true, value: interests };
   }
 
-  if (step === "preferred_time") {
+  if (step === "preferred_time" || step === "dinner_conversation_time") {
     const preferredTime = normalizePreferredTimeInput(cleaned);
 
     if (!preferredTime) {
       return {
         ok: false,
-        reply: "Please reply with a daily quest time on the hour or half-hour, like 8am, 8:30am, 6pm, or 6:30pm.",
+        reply:
+          step === "dinner_conversation_time"
+            ? "Please reply with a dinner question time on the hour or half-hour, like 6pm or 6:30pm."
+            : "Please reply with a daily quest time on the hour or half-hour, like 8am, 8:30am, 6pm, or 6:30pm.",
       };
     }
 
@@ -160,13 +163,19 @@ export function getOnboardingReply(step: string | null, body: string) {
     case "timezone":
       return {
         nextStep: "dinner_conversation",
-        reply: `Would you also like optional dinner questions for richer family conversations? Reply YES or NO.`,
+        reply: `Would you also like one optional dinner-table question for richer family conversations? Reply YES or NO.`,
       };
 
     case "dinner_conversation":
       return {
         nextStep: "complete",
         reply: `You're all set. Elsy will send tiny curiosity quests you can try together. Ask, notice, wonder. Think Else.`,
+      };
+
+    case "dinner_conversation_time":
+      return {
+        nextStep: "complete",
+        reply: `Done. I'll send one dinner-table question around ${body}. Reply DINNER OFF anytime to pause it.`,
       };
 
     default:
@@ -197,4 +206,8 @@ export function parseDinnerConversationOptIn(body: string): boolean | null {
 
 export function invalidDinnerConversationReply(): string {
   return `Please reply YES or NO for optional dinner questions.`;
+}
+
+export function dinnerConversationTimePrompt(): string {
+  return "What time should Elsy send your dinner-table question? Reply with an hour or half-hour like 6pm or 6:30pm.";
 }

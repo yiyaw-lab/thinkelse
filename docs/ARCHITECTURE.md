@@ -12,6 +12,7 @@ Else is a text-based family cognition coach.
 6. Child responses complete that child’s mission, get interpreted, and may also create durable memory.
 7. Feedback-only replies are acknowledged and stored as family learning without completing the active mission.
 8. Future quests draw from recent family learning and the evidence-informed technique catalog.
+9. Opted-in families can receive one dinner-table question at their chosen dinner time; dinner prompts are family-level messages, not quests.
 
 ## Stack
 
@@ -25,6 +26,8 @@ Else is a text-based family cognition coach.
 ## Core Folders
 
 - `app/api/sms/inbound` — Telnyx inbound webhook
+- `app/api/cron/dinner-conversation` — optional dinner question scheduler
+- `app/api/admin/dinner-nudges` — guarded one-time dinner setup nudge route
 - `app/api/health` — health check route
 - `lib/supabaseAdmin.ts` — server-side Supabase client
 - `lib/onboarding.ts` — onboarding state machine
@@ -40,6 +43,9 @@ Product intelligence lives in `lib/agents`.
 
 Evidence-informed quest methodology lives in `lib/agents/research-techniques.ts`
 and is documented in `docs/EVIDENCE_INFORMED_TECHNIQUES.md`.
+
+Dinner conversation generation lives in `lib/agents/generateDinnerConversation.ts`
+and uses the same evidence-informed technique catalog without creating quest rows.
 
 Database operations live in `lib/db`.
 

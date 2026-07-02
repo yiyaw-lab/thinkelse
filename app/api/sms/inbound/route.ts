@@ -10,6 +10,7 @@ import {
   buildQuestReplyLearningContext,
 } from "@/lib/agents/build-family-context";
 import {
+  dinnerConversationTimePrompt,
   getOnboardingReply,
   invalidDinnerConversationReply,
   invalidTimezoneReply,
@@ -17,6 +18,7 @@ import {
   validateOnboardingInput,
 } from "@/lib/onboarding";
 import {
+  completeDinnerConversationSetup,
   createFamily,
   findFamilyByPhone,
   updateFamily,
@@ -586,20 +588,33 @@ async function handleInboundMessage(from: string, body: string) {
 
           if (dinnerConversationOptIn === null) {
             replyText = invalidDinnerConversationReply();
+          } else if (dinnerConversationOptIn) {
+            await updateFamily(existingFamily.id, {
+              onboarding_step: "dinner_conversation_time",
+              parent_name: existingFamily.parent_name,
+              preferred_time: existingFamily.preferred_time,
+              dinner_conversation_opt_in_asked_at: new Date().toISOString(),
+            });
+
+            replyText = `Great. ${dinnerConversationTimePrompt()}`;
           } else {
             await updateFamily(existingFamily.id, {
               onboarding_step: "complete",
               parent_name: existingFamily.parent_name,
               preferred_time: existingFamily.preferred_time,
-              dinner_conversation_opt_in: dinnerConversationOptIn,
+              dinner_conversation_opt_in: false,
+              dinner_conversation_opt_in_asked_at: new Date().toISOString(),
             });
 
-            const preferenceReply = dinnerConversationOptIn
-              ? "Great, I'll remember you'd like dinner conversation questions."
-              : "No problem, we'll stick to daily curiosity quests.";
-
-            replyText = `${preferenceReply} ${getOnboardingReply("dinner_conversation", body).reply} Reply QUEST if you'd like one now.`;
+            replyText = `No problem, we'll stick to daily curiosity quests. ${getOnboardingReply("dinner_conversation", body).reply} Reply QUEST if you'd like one now.`;
           }
+        } else if (currentStep === "dinner_conversation_time") {
+          await completeDinnerConversationSetup(
+            existingFamily.id,
+            validation.value as string,
+          );
+
+          replyText = `${getOnboardingReply("dinner_conversation_time", validation.value as string).reply} Reply QUEST if you'd like one now.`;
         } else {
           const onboarding = getOnboardingReply(currentStep, validatedBody);
 

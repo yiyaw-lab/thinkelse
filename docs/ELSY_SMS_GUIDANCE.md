@@ -20,6 +20,8 @@ without exposing research labels, citations, or future-skills jargon to parents.
 
 ## Current Outbound Shape
 
+Daily quest:
+
 ```text
 Ask:
 <one vivid question>
@@ -30,3 +32,19 @@ Try:
 Later:
 <one deeper question>
 ```
+
+Dinner conversation:
+
+```text
+Dinner question:
+<one table-ready question>
+
+Parent move:
+<one facilitation move>
+
+If it opens up:
+<one deeper question>
+```
+
+Dinner prompts are optional, reply-free, and should not create quest rows or
+mission completions.
