@@ -1,11 +1,16 @@
-import { updateFamily } from "@/lib/db/families";
+import {
+  restartFamilySettingsOnboarding,
+  updateFamily,
+} from "@/lib/db/families";
 import {
   getHelpMessage,
   getAlreadySubscribedMessage,
+  getSettingsRestartMessage,
   getStartConfirmation,
   getStopConfirmation,
   isHelloKeyword,
   isHelpKeyword,
+  isSettingsKeyword,
   isStartKeyword,
   isStopKeyword,
   normalizeSmsBody,
@@ -94,6 +99,28 @@ export async function handleSmsKeyword(
     return {
       handled: true,
       reply: `You're unsubscribed from Else SMS. Reply START to rejoin, or HELP for support.`,
+      stopProcessing: true,
+    };
+  }
+
+  if (isSettingsKeyword(body)) {
+    if (!family) {
+      return { handled: false };
+    }
+
+    if (family.onboarding_step !== "complete") {
+      return {
+        handled: true,
+        reply:
+          "You're still setting up Else. Reply to the current setup question, or reply HELP for support.",
+        stopProcessing: true,
+      };
+    }
+
+    await restartFamilySettingsOnboarding(family.id);
+    return {
+      handled: true,
+      reply: getSettingsRestartMessage(),
       stopProcessing: true,
     };
   }

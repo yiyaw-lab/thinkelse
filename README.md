@@ -29,20 +29,20 @@ There are two entry points. **Inbound SMS** (`/api/sms/inbound`) is a Telnyx
 webhook that verifies the signature, then either runs SMS compliance keywords
 (STOP / HELP / START), advances the onboarding state machine, or interprets a
 child's response and replies. **The daily-quest cron** (`/api/cron/daily-quest`)
-is polled hourly (an external scheduler on Vercel Hobby), matches each family's
-local hour against their preferred time, generates a quest, and sends it. Quests
-from the first 50 families are flagged `pending` for human QA via the admin
-review queue (`/admin/review` + `/api/admin/review-queue`).
+is invoked every 30 minutes by Vercel Cron, matches each
+family's local hour and minute against their preferred time, generates a quest,
+and sends it. Quests from the first 50 families are flagged `pending` for human
+QA via the admin review queue (`/admin/review` + `/api/admin/review-queue`).
 
 ```mermaid
 flowchart TD
     Parent([Parent's phone])
     Telnyx[Telnyx SMS]
-    Scheduler[Hourly external scheduler]
+    Scheduler[30-minute Vercel Cron]
 
     subgraph App[Next.js app on Vercel]
         Inbound["/api/sms/inbound<br/>(verify + route)"]
-        Cron["/api/cron/daily-quest<br/>(match local hour)"]
+        Cron["/api/cron/daily-quest<br/>(match local time)"]
         Admin["/admin/review +<br/>/api/admin/review-queue"]
 
         subgraph Lib[lib]
@@ -58,7 +58,7 @@ flowchart TD
     Reviewer([Human reviewer])
 
     Parent -->|texts Elsy| Telnyx -->|webhook| Inbound
-    Scheduler -->|hourly GET| Cron
+    Scheduler -->|30-minute GET| Cron
 
     Inbound --> Onboard
     Inbound --> Agents
@@ -93,7 +93,7 @@ Routes stay thin. Intelligence lives in `lib/agents`. Database operations live i
 app/
   api/
     sms/inbound/      — Telnyx webhook, orchestrates all SMS logic
-    cron/daily-quest/ — Vercel cron for scheduled quest delivery
+    cron/daily-quest/ — scheduler route for quest delivery
     health/           — Health check
 lib/
   agents/             — AI reasoning (quest generation, response interpretation)
@@ -177,31 +177,14 @@ npx supabase migration repair --status applied 20250613120000
 
 ### Daily quest scheduler (production)
 
-Production is deployed to Vercel Hobby, where Vercel Cron can only run once per day. Do **not** add an hourly `vercel.json` cron on Hobby; deployment will fail. Else needs an hourly production trigger because `/api/cron/daily-quest` checks each family's preferred local hour and skips families outside that hour.
+Production is deployed to the Coaur Vercel Pro team, so scheduled delivery uses native Vercel Cron in `vercel.json`:
 
-Configure an external HTTP scheduler, such as [cron-job.org](https://cron-job.org), from `scheduler.daily-quest.production.json`:
-
-```
-Method: GET
-URL: https://elsey.app/api/cron/daily-quest
-Schedule: 0 * * * * (every hour, UTC)
-Header: Authorization: Bearer ${CRON_SECRET}
+```txt
+Path: /api/cron/daily-quest
+Schedule: 0,30 * * * * (every 30 minutes, UTC)
 ```
 
-`CRON_SECRET` must be set in Vercel for Production and used as the external scheduler's secret value. Do not store the secret in this repository.
-
-If the Vercel project is upgraded to Pro, replace the external scheduler with this `vercel.json` config and deploy it:
-
-```json
-{
-  "crons": [
-    {
-      "path": "/api/cron/daily-quest",
-      "schedule": "0 * * * *"
-    }
-  ]
-}
-```
+`CRON_SECRET` must be set in Vercel for Production. Do not store the secret in this repository. The cron runs every 30 minutes because onboarding accepts whole-hour and half-hour daily quest times, and `/api/cron/daily-quest` only sends when the family's preferred local hour and minute match. The route also skips families who already received a quest that local day.
 
 ### Quest review queue (first 50 families)
 
@@ -231,7 +214,8 @@ Inbound SMS handles standard keywords before quest logic:
 - **HELP** (also INFO) — sends program help text
 - **START** (also UNSTOP, YES) — re-subscribes opted-out families
 - **HELLO** — re-subscribes if opted out; otherwise treated as onboarding for new numbers
-- **QUEST** (also QUEST NOW, NEW QUEST, SEND QUEST, START QUEST, TODAY'S QUEST) — sends an on-demand quest after onboarding is complete
+- **QUEST** / **NEW MISSION** (also QUEST NOW, NEW QUEST, ANOTHER QUEST, NEXT MISSION, SEND QUEST, START MISSION, TODAY'S QUEST) — sends an on-demand quest after onboarding is complete
+- **SETTINGS** (also SETUP, CHANGE TIME, UPDATE TIMEZONE, RESET ONBOARDING) — restarts the daily-time/timezone setup for completed families
 
 ### SMS abuse guardrails
 
@@ -250,7 +234,7 @@ Guardrail counters are stored in `sms_guardrail_events` with event type, status,
 
 Onboarding asks for US timezone after preferred send time, then asks whether the family wants optional dinner questions for richer family conversation. The dinner preference is persisted as `families.dinner_conversation_opt_in` for a future table-time delivery flow; daily quest delivery is unchanged for now.
 
-Completing onboarding does not send a quest automatically; families can reply **QUEST** for one immediately, or wait for the hourly cron. The cron matches each family's **local hour** (not UTC) and skips families who already received a quest that local day.
+Completing onboarding does not send a quest automatically; families can reply **QUEST** or **NEW MISSION** for one immediately, or wait for the 30-minute scheduler. The scheduler matches each family's **local hour and minute** (not UTC) and skips families who already received a quest that local day.
 
 Apply migration `20250613160000_sms_opt_in_and_timezone.sql` in Supabase if not auto-deployed.
 Apply migration `20260627045600_dinner_conversation_opt_in.sql` to add the dinner preference column.

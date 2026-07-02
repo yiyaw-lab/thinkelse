@@ -13,12 +13,40 @@ const HELP_KEYWORDS = new Set(["help", "info"]);
 
 const START_KEYWORDS = new Set(["start", "unstop", "yes"]);
 
+const SETTINGS_KEYWORDS = new Set([
+  "settings",
+  "setup",
+  "reset settings",
+  "change settings",
+  "update settings",
+  "change setup",
+  "update setup",
+  "reset setup",
+  "restart setup",
+  "onboarding",
+  "reset onboarding",
+  "change time",
+  "change my time",
+  "update time",
+  "change quest time",
+  "update quest time",
+  "change mission time",
+  "update mission time",
+  "change timezone",
+  "update timezone",
+  "timezone",
+]);
+
 const QUEST_REQUEST_KEYWORDS = new Set([
   "quest",
   "quest please",
   "quest now",
   "new quest",
   "new quest please",
+  "another quest",
+  "another quest please",
+  "next quest",
+  "next quest please",
   "send quest",
   "start quest",
   "today's quest",
@@ -28,6 +56,10 @@ const QUEST_REQUEST_KEYWORDS = new Set([
   "mission now",
   "new mission",
   "new mission please",
+  "another mission",
+  "another mission please",
+  "next mission",
+  "next mission please",
   "send mission",
   "start mission",
   "today's mission",
@@ -37,7 +69,14 @@ const QUEST_REQUEST_KEYWORDS = new Set([
 const QUEST_REQUEST_PATTERNS = [
   /^(?:please )?(?:send|start|give me|make|create) (?:a )?(?:new |today's |todays )?(?:quest|mission)(?: please)?$/,
   /^(?:can|could) (?:i|we) (?:get|have|start) (?:a )?(?:new |today's |todays )?(?:quest|mission)(?: please)?\??$/,
+  /^(?:i|we) (?:need|want) (?:a )?(?:new |another |next )?(?:quest|mission)(?: please)?$/,
   /^i(?:'d| would) like (?:a )?(?:new |today's |todays )?(?:quest|mission)(?: please)?$/,
+];
+
+const SETTINGS_PATTERNS = [
+  /^(?:please )?(?:change|update|reset) (?:my |our )?(?:settings|setup|onboarding|timezone|time|quest time|mission time)(?: please)?$/,
+  /^(?:can|could) (?:i|we) (?:change|update|reset) (?:my |our )?(?:settings|setup|timezone|time|quest time|mission time)(?: please)?\??$/,
+  /^i(?:'d| would) like to (?:change|update|reset) (?:my |our )?(?:settings|setup|timezone|time|quest time|mission time)(?: please)?$/,
 ];
 
 const QUESTION_STARTERS = new Set([
@@ -76,6 +115,14 @@ export function isStartKeyword(body: string): boolean {
   return START_KEYWORDS.has(normalizeSmsBody(body));
 }
 
+export function isSettingsKeyword(body: string): boolean {
+  const normalizedBody = normalizeSmsBody(body);
+  return (
+    SETTINGS_KEYWORDS.has(normalizedBody) ||
+    SETTINGS_PATTERNS.some((pattern) => pattern.test(normalizedBody))
+  );
+}
+
 export function isHelloKeyword(body: string): boolean {
   return normalizeSmsBody(body) === "hello";
 }
@@ -107,7 +154,7 @@ export function getStopConfirmation(): string {
 }
 
 export function getHelpMessage(): string {
-  return `Else SMS Program: daily ask/try/later curiosity quests and optional dinner questions for family conversation. Reply QUEST after onboarding. Msg frequency varies (typically 1–3/day). Msg & data rates may apply. Reply STOP to opt out. Support: ${SITE.email} · ${SITE.url}/start`;
+  return `Else SMS Program: daily ask/try/later curiosity quests and optional dinner questions for family conversation. Reply QUEST or NEW MISSION after onboarding. Reply SETTINGS to update your daily quest time. Msg frequency varies (typically 1–3/day). Msg & data rates may apply. Reply STOP to opt out. Support: ${SITE.email} · ${SITE.url}/start`;
 }
 
 export function getStartConfirmation(): string {
@@ -115,5 +162,9 @@ export function getStartConfirmation(): string {
 }
 
 export function getAlreadySubscribedMessage(): string {
-  return "You're already subscribed to Else. Elsy will send your next quest at your preferred time, or reply QUEST for one now. Reply STOP to opt out, HELP for help.";
+  return "You're already subscribed to Else. Elsy will send your next quest at your preferred time, or reply QUEST or NEW MISSION for one now. Reply SETTINGS to update your daily time, STOP to opt out, HELP for help.";
+}
+
+export function getSettingsRestartMessage(): string {
+  return "Let's update your Else settings. What time should Elsy send your daily curiosity quest? Reply with an hour or half-hour like 8am, 8:30am, 6pm, or 6:30pm.";
 }

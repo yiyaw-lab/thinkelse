@@ -1,4 +1,4 @@
-import { timezonePrompt } from "@/lib/timezone";
+import { normalizePreferredTimeInput, timezonePrompt } from "@/lib/timezone";
 
 const YES_RESPONSES = new Set(["yes", "y", "yeah", "yep", "sure", "ok", "okay"]);
 const NO_RESPONSES = new Set(["no", "n", "nope", "not now"]);
@@ -15,17 +15,6 @@ function cleanSmsInput(body: string): string {
 
 function isReasonableName(value: string): boolean {
   return value.length >= 1 && value.length <= MAX_NAME_LENGTH && !/https?:\/\//i.test(value);
-}
-
-function normalizePreferredTime(body: string): string | null {
-  const normalized = cleanSmsInput(body).toLowerCase().replace(/\s+/g, "");
-  const match = normalized.match(/^([1-9]|1[0-2])(?::([0-5]\d))?(am|pm)$/);
-
-  if (!match) {
-    return null;
-  }
-
-  return `${match[1]}${match[2] ? `:${match[2]}` : ""}${match[3]}`;
 }
 
 export type OnboardingValidation =
@@ -99,12 +88,12 @@ export function validateOnboardingInput(
   }
 
   if (step === "preferred_time") {
-    const preferredTime = normalizePreferredTime(cleaned);
+    const preferredTime = normalizePreferredTimeInput(cleaned);
 
     if (!preferredTime) {
       return {
         ok: false,
-        reply: "Please reply with a daily quest time like 8am, 8:30am, 6pm, or 6:30pm.",
+        reply: "Please reply with a daily quest time on the hour or half-hour, like 8am, 8:30am, 6pm, or 6:30pm.",
       };
     }
 

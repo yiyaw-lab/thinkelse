@@ -12,33 +12,29 @@ import {
   recordOutboundSent,
 } from "@/lib/sms/guardrails";
 import { sendSms } from "@/lib/telnyx/sendSms";
-import { DEFAULT_TIMEZONE, formatLocalDateKey, getLocalHour } from "@/lib/timezone";
+import {
+  DEFAULT_TIMEZONE,
+  formatLocalDateKey,
+  getLocalTimeParts,
+  type PreferredTimeParts,
+  parsePreferredTime,
+} from "@/lib/timezone";
 
-// Parse a preferred_time string like "8am", "8:30am", "6pm", "6:30pm" into a 24-hour integer (0–23).
-// Returns null if unparseable.
-function parsePreferredHour(preferredTime: string): number | null {
-  const match = preferredTime
-    .trim()
-    .toLowerCase()
-    .match(/^(\d{1,2})(?::(\d{2}))?\s*(am|pm)$/);
-
-  if (!match) return null;
-
-  let hour = parseInt(match[1], 10);
-  const period = match[3];
-
-  if (period === "am") {
-    if (hour === 12) hour = 0;
-  } else {
-    if (hour !== 12) hour += 12;
+function isPreferredDeliveryWindow(
+  preferredTime: PreferredTimeParts,
+  localTime: PreferredTimeParts,
+): boolean {
+  if (preferredTime.hour !== localTime.hour) {
+    return false;
   }
 
-  return hour;
+  const minuteDelta = localTime.minute - preferredTime.minute;
+  return minuteDelta >= 0 && minuteDelta < 30;
 }
 
 export async function GET(request: Request) {
-  // Production cron can be triggered by Vercel Cron or an external scheduler.
-  // Either way, require the shared bearer token configured as CRON_SECRET.
+  // Production cron is configured in vercel.json. Require the shared bearer
+  // token configured as CRON_SECRET so manual requests cannot trigger delivery.
   const authHeader = request.headers.get("authorization");
   const cronSecret = process.env.CRON_SECRET;
   if (process.env.NODE_ENV === "production") {
@@ -67,10 +63,17 @@ export async function GET(request: Request) {
       typeof family.timezone === "string" && family.timezone
         ? family.timezone
         : DEFAULT_TIMEZONE;
-    const preferredHour = parsePreferredHour(family.preferred_time);
-    const localHour = getLocalHour(timezone, now);
+    const preferredTime = parsePreferredTime(family.preferred_time);
+    const localTime = getLocalTimeParts(timezone, now);
 
-    if (preferredHour === null || preferredHour !== localHour) continue;
+    if (!preferredTime) {
+      results.push({ phone: family.phone, status: "skipped_invalid_time" });
+      continue;
+    }
+
+    if (!isPreferredDeliveryWindow(preferredTime, localTime)) {
+      continue;
+    }
 
     const child = await getFirstChildForFamily(family.id);
     if (!child) continue;
