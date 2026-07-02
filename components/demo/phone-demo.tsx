@@ -98,30 +98,34 @@ export function PhoneDemo({ className = "", activeStep, messages }: PhoneDemoPro
   // Sync visible messages when scroll step changes
   useEffect(() => {
     clearTimers();
-    setTyping(false);
-    setComposerText("");
-
-    if (reducedMotion) {
-      setVisibleCount(targetCount);
-      prevStepRef.current = activeStep;
-      return;
-    }
 
     const prevStep = prevStepRef.current;
-    if (prevStep === activeStep) return;
-
     const stepDelta = activeStep - prevStep;
     prevStepRef.current = activeStep;
 
-    if (stepDelta < 0 || stepDelta > 1) {
-      setVisibleCount(targetCount);
-      return;
-    }
+    schedule(() => {
+      setTyping(false);
+      setComposerText("");
 
-    if (stepDelta === 1) {
-      const prevTarget = QUEST_NARRATIVE[prevStep]?.messages.length ?? 0;
-      setVisibleCount(prevTarget);
-    }
+      if (reducedMotion) {
+        setVisibleCount(targetCount);
+        return;
+      }
+
+      if (prevStep === activeStep) return;
+
+      if (stepDelta < 0 || stepDelta > 1) {
+        setVisibleCount(targetCount);
+        return;
+      }
+
+      if (stepDelta === 1) {
+        const prevTarget = QUEST_NARRATIVE[prevStep]?.messages.length ?? 0;
+        setVisibleCount(prevTarget);
+      }
+    }, 0);
+
+    return clearTimers;
   }, [activeStep, targetCount, reducedMotion]);
 
   useEffect(() => {

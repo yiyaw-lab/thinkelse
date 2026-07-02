@@ -1,6 +1,6 @@
 "use client";
 
-import { Fit, Layout, Rive } from "@rive-app/react-canvas";
+import Rive, { Fit, Layout } from "@rive-app/react-canvas";
 import { useEffect, useMemo, useState } from "react";
 
 type ElsyRiveExpressionProps = {

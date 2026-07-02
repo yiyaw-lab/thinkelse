@@ -1,6 +1,7 @@
 "use client";
 
 import { Menu, X } from "lucide-react";
+import Link from "next/link";
 import { type ReactNode, useState } from "react";
 import { LogoLockup } from "@/components/brand/logo-lockup";
 
@@ -21,9 +22,9 @@ export function SiteHeader({ phoneHref, deployBadge }: SiteHeaderProps) {
   return (
     <header className="sticky top-0 z-40 border-b border-pool-line bg-white/90 backdrop-blur-md">
       <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-6 py-4">
-        <a href="/">
+        <Link href="/">
           <LogoLockup markSize={24} showSpark />
-        </a>
+        </Link>
 
         <nav className="hidden items-center gap-8 md:flex" aria-label="Primary">
           {LINKS.map(([label, href]) => (

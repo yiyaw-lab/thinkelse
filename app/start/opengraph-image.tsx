@@ -1,4 +1,4 @@
-import { pageMetadata, SITE } from "@/lib/site";
+import { pageMetadata } from "@/lib/site";
 import { OG_CONTENT_TYPE, OG_SIZE, renderOgImage } from "@/lib/og-image";
 
 export const metadata = pageMetadata({
