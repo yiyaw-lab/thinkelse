@@ -156,6 +156,10 @@ TELNYX_API_KEY=KEYxxxxxxxx
 TELNYX_PHONE_NUMBER=+1xxxxxxxxxx
 TELNYX_MESSAGING_PROFILE_ID=your-messaging-profile-uuid
 TELNYX_PUBLIC_KEY=your-base64-public-key
+
+# Optional. Use 1/true/light for light world-context dinner prompts,
+# deeper/medium for medium-sensitivity cards, or omit/0/false to disable.
+DINNER_WORLD_CONTEXT_ENABLED=0
 ```
 
 `TELNYX_PHONE_NUMBER` must be E.164 format (e.g. `+14155551234`).
@@ -231,6 +235,14 @@ To verify who would receive a dinner question without sending SMS, call:
 ```bash
 curl -H "Authorization: Bearer YOUR_CRON_SECRET" "https://elsey.app/api/cron/dinner-conversation?dryRun=1"
 ```
+
+Dinner prompt generation can optionally use curated world-context cards for
+current-event-adjacent prompts about fairness, evidence, trust, technology,
+community, disagreement, and tradeoffs. This is disabled by default. Set
+`DINNER_WORLD_CONTEXT_ENABLED=light` only after previewing outputs locally with
+`/api/test-dinner?world=1`; set `deeper` only for reviewed medium-sensitivity
+cards. The generator must not mention live headlines, parties, politicians,
+violent events, or ask children to know the news.
 
 For current opted-in SMS families who never saw the dinner setup question, use
 the guarded admin route:
@@ -332,6 +344,7 @@ Apply migration `20260702211407_family_learning_events.sql` to add durable famil
 | `/api/health` | GET | Health check |
 | `/api/test-quest` | GET | Generate a sample quest (local dev only) |
 | `/api/test-interpret` | GET | Generate a sample Elsy reply (local dev only) |
+| `/api/test-dinner` | GET | Generate a sample dinner conversation SMS (local dev only) |
 | `/api/admin/review-queue` | GET, PATCH | Human review queue for first 50 families |
 | `/api/admin/dinner-nudges` | GET, POST | Dry-run or send one-time dinner setup nudges |
 | `/admin/review` | GET | Web UI for quest review queue |
