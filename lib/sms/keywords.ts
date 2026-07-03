@@ -131,8 +131,10 @@ const ADD_CHILD_PATTERNS = [
 ];
 
 const DINNER_SETUP_PATTERNS = [
-  /^dinner (?:at )?(?:[1-9]|1[0-2])(?::[0-5]\d)?\s*(?:am|pm)$/,
-  /^(?:please )?(?:set up|setup|start|turn on) (?:dinner|dinner questions?)(?: please)?$/,
+  /^dinner(?: questions?| conversations?| convo)? (?:at |on |around |for )?(?:[1-9]|1[0-2])(?::[0-5]\d)?\s*(?:am|pm)(?: please)?$/,
+  /^(?:please )?(?:set up|setup|start|enable|turn on) (?:dinner|dinner questions?)(?: please)?$/,
+  /^(?:please )?(?:set up|setup|start|enable|turn on) (?:dinner|dinner questions?) (?:at |on |around |for )?(?:[1-9]|1[0-2])(?::[0-5]\d)?\s*(?:am|pm)(?: please)?$/,
+  /^(?:please )?turn dinner on (?:at |on |around |for )?(?:[1-9]|1[0-2])(?::[0-5]\d)?\s*(?:am|pm)(?: please)?$/,
   /^(?:can|could) (?:i|we) (?:set up|start|turn on) (?:dinner|dinner questions?)(?: please)?\??$/,
 ];
 

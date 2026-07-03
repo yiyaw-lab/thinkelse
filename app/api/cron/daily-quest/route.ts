@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 
 import { generateQuest } from "@/lib/agents/generateQuest";
 import { buildQuestContext } from "@/lib/agents/build-family-context";
+import { formatLocalClock, isCronDryRun } from "@/lib/cron/request";
 import { getCompleteFamilies } from "@/lib/db/families";
 import { getChildrenForFamily } from "@/lib/db/children";
 import { createQuest, hasQuestOnLocalDay } from "@/lib/db/quests";
@@ -19,6 +20,16 @@ import {
   isPreferredDeliveryWindow,
   parsePreferredTime,
 } from "@/lib/timezone";
+
+type DailyQuestCronResult = {
+  phone: string | null;
+  child?: string;
+  status: string;
+  timezone?: string;
+  preferredTime?: string | null;
+  localDate?: string;
+  localTime?: string;
+};
 
 export async function GET(request: Request) {
   // Production cron is configured in vercel.json. Require the shared bearer
@@ -40,12 +51,28 @@ export async function GET(request: Request) {
   }
 
   const now = new Date();
+  const dryRun = isCronDryRun(request);
   const families = await getCompleteFamilies();
 
-  const results: { phone: string; child?: string; status: string }[] = [];
+  const results: DailyQuestCronResult[] = [];
 
   for (const family of families) {
-    if (!family.preferred_time || !family.phone) continue;
+    if (!family.phone) {
+      if (dryRun) {
+        results.push({ phone: null, status: "skipped_missing_phone" });
+      }
+      continue;
+    }
+
+    if (!family.preferred_time) {
+      if (dryRun) {
+        results.push({
+          phone: family.phone,
+          status: "skipped_missing_preferred_time",
+        });
+      }
+      continue;
+    }
 
     const timezone =
       typeof family.timezone === "string" && family.timezone
@@ -53,23 +80,44 @@ export async function GET(request: Request) {
         : DEFAULT_TIMEZONE;
     const preferredTime = parsePreferredTime(family.preferred_time);
     const localTime = getLocalTimeParts(timezone, now);
+    const schedule = {
+      timezone,
+      preferredTime: family.preferred_time,
+      localTime: formatLocalClock(localTime),
+    };
 
     if (!preferredTime) {
-      results.push({ phone: family.phone, status: "skipped_invalid_time" });
+      results.push({
+        phone: family.phone,
+        status: "skipped_invalid_time",
+        ...schedule,
+      });
       continue;
     }
 
     if (!isPreferredDeliveryWindow(preferredTime, localTime)) {
+      if (dryRun) {
+        results.push({
+          phone: family.phone,
+          status: "skipped_outside_delivery_window",
+          ...schedule,
+        });
+      }
       continue;
     }
 
     const children = await getChildrenForFamily(family.id);
     if (children.length === 0) {
-      results.push({ phone: family.phone, status: "skipped_missing_child" });
+      results.push({
+        phone: family.phone,
+        status: "skipped_missing_child",
+        ...schedule,
+      });
       continue;
     }
 
     const localDateKey = formatLocalDateKey(timezone, now);
+    const dueSchedule = { ...schedule, localDate: localDateKey };
 
     for (const child of children) {
       const alreadySentToday = await hasQuestOnLocalDay(
@@ -83,6 +131,17 @@ export async function GET(request: Request) {
           phone: family.phone,
           child: child.name,
           status: "skipped_already_sent",
+          ...dueSchedule,
+        });
+        continue;
+      }
+
+      if (dryRun) {
+        results.push({
+          phone: family.phone,
+          child: child.name,
+          status: "would_send",
+          ...dueSchedule,
         });
         continue;
       }
@@ -98,6 +157,7 @@ export async function GET(request: Request) {
           phone: family.phone,
           child: child.name,
           status: `skipped_${outboundLimit.reason}`,
+          ...dueSchedule,
         });
         continue;
       }
@@ -124,13 +184,20 @@ export async function GET(request: Request) {
         bodyLength: message.length,
       });
 
-      results.push({ phone: family.phone, child: child.name, status: "sent" });
+      results.push({
+        phone: family.phone,
+        child: child.name,
+        status: "sent",
+        ...dueSchedule,
+      });
     }
   }
 
   return NextResponse.json({
     ok: true,
+    dryRun,
     sent: results.filter((result) => result.status === "sent").length,
+    wouldSend: results.filter((result) => result.status === "would_send").length,
     results,
   });
 }

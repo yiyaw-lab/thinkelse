@@ -37,8 +37,12 @@ export type KeywordResult =
 
 function dinnerTimeFromKeyword(body: string): string | null {
   const normalized = normalizeSmsBody(body)
-    .replace(/^dinner(?: questions?)?\s*/, "")
-    .replace(/^at\s+/, "")
+    .replace(/^please\s+/, "")
+    .replace(/^dinner(?:\s+(?:questions?|conversations?|convo))?\s*/, "")
+    .replace(/^(?:set up|setup|start|enable|turn on)\s+dinner(?:\s+questions?)?\s*/, "")
+    .replace(/^turn\s+dinner\s+on\s*/, "")
+    .replace(/^(?:at|on|around|for)\s+/, "")
+    .replace(/\s+please$/, "")
     .trim();
 
   if (!normalized) {
