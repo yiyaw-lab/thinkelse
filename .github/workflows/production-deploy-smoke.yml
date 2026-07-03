@@ -1,0 +1,45 @@
+name: Production Deploy Smoke
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  verify-production-deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 16
+    steps:
+      - name: Wait for elsy.app to report this commit
+        env:
+          HEALTH_URL: https://elsey.app/api/health
+          EXPECTED_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+
+          expected="${EXPECTED_SHA:0:7}"
+          last_body=""
+
+          for attempt in {1..90}; do
+            if body="$(curl -fsS --max-time 10 "$HEALTH_URL")"; then
+              sha="$(BODY="$body" node -e 'const body = JSON.parse(process.env.BODY); process.stdout.write(String(body?.deploy?.sha ?? ""));' || true)"
+              env_name="$(BODY="$body" node -e 'const body = JSON.parse(process.env.BODY); process.stdout.write(String(body?.deploy?.env ?? ""));' || true)"
+
+              echo "Attempt $attempt: deploy.sha=${sha:-missing}, deploy.env=${env_name:-missing}, expected=$expected"
+
+              if [ "$sha" = "$expected" ] && [ "$env_name" = "production" ]; then
+                exit 0
+              fi
+
+              last_body="$body"
+            else
+              echo "Attempt $attempt: health endpoint unavailable"
+            fi
+
+            sleep 10
+          done
+
+          echo "::error::Production did not report expected deploy sha $expected."
+          echo "Last health body: ${last_body:-empty}"
+          exit 1

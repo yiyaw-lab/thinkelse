@@ -203,6 +203,14 @@ Schedule: 0,30 * * * * (every 30 minutes, UTC)
 
 `CRON_SECRET` must be set in Vercel for Production. Do not store the secret in this repository. The cron runs every 30 minutes because onboarding accepts whole-hour and half-hour daily quest times, and `/api/cron/daily-quest` only sends when the family's preferred local hour and minute match. The route sends each child profile at most one quest per local day.
 
+To verify who would receive a daily quest without sending SMS, call the cron in
+dry-run mode. This still requires `CRON_SECRET` in production and does not call
+OpenAI, send Telnyx SMS, create quest rows, or record guardrail events:
+
+```bash
+curl -H "Authorization: Bearer YOUR_CRON_SECRET" "https://elsey.app/api/cron/daily-quest?dryRun=1"
+```
+
 ### Dinner conversation scheduler (production)
 
 Optional dinner questions use native Vercel Cron too:
@@ -214,8 +222,15 @@ Schedule: 0,30 * * * * (every 30 minutes, UTC)
 
 Families opt in by replying YES during onboarding, then choosing a dinner
 question time such as `6pm` or `6:30pm`. Existing completed families can reply
-**DINNER** to set it up or **DINNER OFF** to pause it. Dinner prompts are
-family-level SMS messages and do not create quest rows or mission completions.
+**DINNER** to set it up, **DINNER 6:30PM** or **DINNER ON 6:30PM** to set it
+immediately, or **DINNER OFF** to pause it. Dinner prompts are family-level SMS
+messages and do not create quest rows or mission completions.
+
+To verify who would receive a dinner question without sending SMS, call:
+
+```bash
+curl -H "Authorization: Bearer YOUR_CRON_SECRET" "https://elsey.app/api/cron/dinner-conversation?dryRun=1"
+```
 
 For current opted-in SMS families who never saw the dinner setup question, use
 the guarded admin route:
@@ -251,6 +266,13 @@ curl -X PATCH https://elsey.app/api/admin/review-queue \
 
 Uses `ADMIN_SECRET` if set, otherwise falls back to `CRON_SECRET`.
 
+### Production deploy freshness
+
+`/api/health` reports the short Vercel Git commit SHA and environment. The
+`Production Deploy Smoke` GitHub Action runs after pushes to `main` and polls
+`https://elsey.app/api/health` until production reports the same commit SHA.
+This catches stale or disconnected Vercel Git deployments after merges.
+
 ### SMS compliance keywords
 
 Inbound SMS handles standard keywords before quest logic:
@@ -262,7 +284,7 @@ Inbound SMS handles standard keywords before quest logic:
 - **QUEST** / **NEW MISSION** (also QUEST NOW, NEW QUEST, ANOTHER QUEST, NEXT MISSION, SEND QUEST, START MISSION, TODAY'S QUEST) — sends an on-demand quest after onboarding is complete
 - **QUEST FOR [child name]** / **NEW MISSION FOR [child name]** — sends an on-demand quest for a specific child profile
 - **ADD CHILD** (also ADD ANOTHER CHILD, NEW CHILD, ADD KID, ADD SIBLING) — adds another child profile with its own age and interests
-- **DINNER** / **DINNER [time]** — starts optional dinner-question setup or sets it immediately, e.g. DINNER 6:30PM
+- **DINNER** / **DINNER [time]** / **DINNER ON [time]** — starts optional dinner-question setup or sets it immediately, e.g. DINNER 6:30PM
 - **DINNER OFF** — pauses optional dinner questions while keeping daily quests active
 - **SETTINGS** (also SETUP, CHANGE TIME, UPDATE TIMEZONE, RESET ONBOARDING) — restarts the daily-time/timezone setup for completed families
 
@@ -305,8 +327,8 @@ Apply migration `20260702211407_family_learning_events.sql` to add durable famil
 | Route | Method | Description |
 |---|---|---|
 | `/api/sms/inbound` | POST | Telnyx webhook — handles all inbound SMS |
-| `/api/cron/daily-quest` | GET | Sends daily quests to families at their preferred time |
-| `/api/cron/dinner-conversation` | GET | Sends optional dinner-table questions to opted-in families |
+| `/api/cron/daily-quest` | GET | Sends daily quests to families at their preferred time; `?dryRun=1` reports without sending |
+| `/api/cron/dinner-conversation` | GET | Sends optional dinner-table questions to opted-in families; `?dryRun=1` reports without sending |
 | `/api/health` | GET | Health check |
 | `/api/test-quest` | GET | Generate a sample quest (local dev only) |
 | `/api/test-interpret` | GET | Generate a sample Elsy reply (local dev only) |
