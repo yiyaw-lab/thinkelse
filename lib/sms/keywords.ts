@@ -51,6 +51,26 @@ const ADD_CHILD_KEYWORDS = new Set([
   "add sibling",
 ]);
 
+const DINNER_SETUP_KEYWORDS = new Set([
+  "dinner",
+  "dinner on",
+  "dinner questions",
+  "dinner question",
+  "setup dinner",
+  "set up dinner",
+  "dinner setup",
+  "start dinner",
+]);
+
+const DINNER_OFF_KEYWORDS = new Set([
+  "dinner off",
+  "pause dinner",
+  "stop dinner",
+  "no dinner",
+  "turn off dinner",
+  "disable dinner",
+]);
+
 const QUEST_REQUEST_KEYWORDS = new Set([
   "quest",
   "quest please",
@@ -102,6 +122,17 @@ const ADD_CHILD_PATTERNS = [
   /^(?:please )?add (?:a |another )?(?:child|kid|sibling)(?: please)?$/,
   /^(?:can|could) (?:i|we) add (?:a |another )?(?:child|kid|sibling)(?: please)?\??$/,
   /^i(?:'d| would) like to add (?:a |another )?(?:child|kid|sibling)(?: please)?$/,
+];
+
+const DINNER_SETUP_PATTERNS = [
+  /^dinner (?:at )?(?:[1-9]|1[0-2])(?::[0-5]\d)?\s*(?:am|pm)$/,
+  /^(?:please )?(?:set up|setup|start|turn on) (?:dinner|dinner questions?)(?: please)?$/,
+  /^(?:can|could) (?:i|we) (?:set up|start|turn on) (?:dinner|dinner questions?)(?: please)?\??$/,
+];
+
+const DINNER_OFF_PATTERNS = [
+  /^(?:please )?(?:pause|stop|disable|turn off) (?:dinner|dinner questions?)(?: please)?$/,
+  /^(?:can|could) (?:i|we) (?:pause|stop|disable|turn off) (?:dinner|dinner questions?)(?: please)?\??$/,
 ];
 
 const QUESTION_STARTERS = new Set([
@@ -156,6 +187,22 @@ export function isAddChildKeyword(body: string): boolean {
   );
 }
 
+export function isDinnerSetupKeyword(body: string): boolean {
+  const normalizedBody = normalizeSmsBody(body);
+  return (
+    DINNER_SETUP_KEYWORDS.has(normalizedBody) ||
+    DINNER_SETUP_PATTERNS.some((pattern) => pattern.test(normalizedBody))
+  );
+}
+
+export function isDinnerOffKeyword(body: string): boolean {
+  const normalizedBody = normalizeSmsBody(body);
+  return (
+    DINNER_OFF_KEYWORDS.has(normalizedBody) ||
+    DINNER_OFF_PATTERNS.some((pattern) => pattern.test(normalizedBody))
+  );
+}
+
 export function isHelloKeyword(body: string): boolean {
   return normalizeSmsBody(body) === "hello";
 }
@@ -187,7 +234,7 @@ export function getStopConfirmation(): string {
 }
 
 export function getHelpMessage(): string {
-  return `Else SMS Program: daily ask/try/later curiosity quests and optional dinner questions for family conversation. Reply QUEST or NEW MISSION after onboarding. Reply QUEST FOR [child name] for a specific child. Reply ADD CHILD to add another child profile. Reply SETTINGS to update your daily quest time. Msg frequency varies. Msg & data rates may apply. Reply STOP to opt out. Support: ${SITE.email} · ${SITE.url}/start`;
+  return `Else SMS Program: daily ask/try/later curiosity quests and optional dinner questions for family conversation. Reply QUEST or NEW MISSION after onboarding. Reply QUEST FOR [child name] for a specific child. Reply ADD CHILD to add another child profile. Reply DINNER to set dinner questions, DINNER OFF to pause them, SETTINGS to update your daily quest time. Msg frequency varies. Msg & data rates may apply. Reply STOP to opt out. Support: ${SITE.email} · ${SITE.url}/start`;
 }
 
 export function getStartConfirmation(): string {
@@ -195,7 +242,7 @@ export function getStartConfirmation(): string {
 }
 
 export function getAlreadySubscribedMessage(): string {
-  return "You're already subscribed to Else. Elsy will send the next quest at your preferred time, or reply QUEST FOR a child name for one now. Reply ADD CHILD for another profile, SETTINGS to update your daily time, STOP to opt out, HELP for help.";
+  return "You're already subscribed to Else. Elsy will send the next quest at your preferred time, or reply QUEST FOR a child name for one now. Reply DINNER to set dinner questions, ADD CHILD for another profile, SETTINGS to update your daily time, STOP to opt out, HELP for help.";
 }
 
 export function getSettingsRestartMessage(): string {

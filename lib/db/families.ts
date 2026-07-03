@@ -51,6 +51,43 @@ export async function getCompleteFamilies() {
   return data ?? [];
 }
 
+export async function getDinnerConversationFamilies() {
+  const { data, error } = await supabaseAdmin
+    .from("families")
+    .select("*")
+    .eq("onboarding_step", "complete")
+    .eq("sms_opted_in", true)
+    .eq("dinner_conversation_opt_in", true)
+    .not("dinner_conversation_time", "is", null);
+
+  if (error) {
+    console.error("getDinnerConversationFamilies error:", error);
+    return [];
+  }
+
+  return data ?? [];
+}
+
+export async function getDinnerConversationNudgeCandidates(limit = 100) {
+  const { data, error } = await supabaseAdmin
+    .from("families")
+    .select("*")
+    .eq("onboarding_step", "complete")
+    .eq("sms_opted_in", true)
+    .eq("dinner_conversation_opt_in", false)
+    .is("dinner_conversation_opt_in_asked_at", null)
+    .is("dinner_conversation_nudged_at", null)
+    .order("created_at", { ascending: true })
+    .limit(limit);
+
+  if (error) {
+    console.error("getDinnerConversationNudgeCandidates error:", error);
+    return [];
+  }
+
+  return data ?? [];
+}
+
 export async function updateFamily(id: string, updates: Record<string, unknown>) {
   const { error } = await supabaseAdmin
     .from("families")
@@ -68,6 +105,45 @@ export async function restartFamilySettingsOnboarding(id: string) {
     preferred_time: null,
     timezone: null,
     dinner_conversation_opt_in: false,
+    dinner_conversation_time: null,
+    dinner_conversation_opt_in_at: null,
+  });
+}
+
+export async function startDinnerConversationSetup(id: string) {
+  await updateFamily(id, {
+    onboarding_step: "dinner_conversation_time",
+    dinner_conversation_opt_in_asked_at: new Date().toISOString(),
+  });
+}
+
+export async function completeDinnerConversationSetup(id: string, dinnerTime: string) {
+  const now = new Date().toISOString();
+  await updateFamily(id, {
+    onboarding_step: "complete",
+    dinner_conversation_opt_in: true,
+    dinner_conversation_time: dinnerTime,
+    dinner_conversation_opt_in_asked_at: now,
+    dinner_conversation_opt_in_at: now,
+  });
+}
+
+export async function pauseDinnerConversation(id: string) {
+  await updateFamily(id, {
+    onboarding_step: "complete",
+    dinner_conversation_opt_in: false,
+  });
+}
+
+export async function markDinnerConversationNudged(id: string) {
+  await updateFamily(id, {
+    dinner_conversation_nudged_at: new Date().toISOString(),
+  });
+}
+
+export async function markDinnerConversationSent(id: string, localDateKey: string) {
+  await updateFamily(id, {
+    dinner_conversation_last_sent_on: localDateKey,
   });
 }
 

@@ -4,11 +4,10 @@ Elsy messages should create small parent-mediated conversations, not lessons. Th
 
 ## Research Themes
 
-- Harvard Center on the Developing Child, "Serve and Return": strong parent-child exchanges start by sharing the child's focus, naming what is happening, taking turns, and following the child's lead. Adaptation for Elsy: keep quests easy to try in ordinary family moments and give parents one conversational move.
-- Harvard Project Zero, Visible Thinking routines: routines like See, Think, Wonder and "What makes you say that?" help children observe closely, connect claims to evidence, and make thinking visible. Adaptation for Elsy: ask one open question, then one deeper follow-up.
-- NAEYC guidance on questions that stretch thinking: open-ended questions, wait time, active listening, and "tell me more" prompts support richer dialogue when matched to the child. Adaptation for Elsy: vary questions by age and avoid trivia or recall tests.
-- Habits of Mind: questioning, gathering data through the senses, thinking flexibly, metacognition, and creating/imagining/innovating are useful thinking dispositions. Adaptation for Elsy: name one primary cognitive skill per quest without exposing jargon to families.
-- Stanford d.school design thinking for learners: low-fidelity making, testing, and iteration can turn "I wonder" into a tangible experiment. Adaptation for Elsy: occasionally invite tiny prototypes, changes, or tests using nearby materials.
+The canonical research-backed methodology catalog lives in
+`docs/EVIDENCE_INFORMED_TECHNIQUES.md` and
+`lib/agents/research-techniques.ts`. Elsy should draw from those techniques
+without exposing research labels, citations, or future-skills jargon to parents.
 
 ## SMS Quality Bar
 
@@ -21,6 +20,8 @@ Elsy messages should create small parent-mediated conversations, not lessons. Th
 
 ## Current Outbound Shape
 
+Daily quest:
+
 ```text
 Ask:
 <one vivid question>
@@ -31,3 +32,19 @@ Try:
 Later:
 <one deeper question>
 ```
+
+Dinner conversation:
+
+```text
+Dinner question:
+<one table-ready question>
+
+Parent move:
+<one facilitation move>
+
+If it opens up:
+<one deeper question>
+```
+
+Dinner prompts are optional, reply-free, and should not create quest rows or
+mission completions.

@@ -23,7 +23,9 @@ Everything runs on Next.js (App Router) on Vercel. Routes stay thin: each route
 hands off to the AI reasoning layer in `lib/agents`, the database helpers in
 `lib/db`, and the Telnyx helpers in `lib/telnyx`. Supabase (PostgreSQL) is the
 single source of truth; OpenAI generates and interprets quests; Telnyx carries
-SMS in both directions.
+SMS in both directions. Quest generation also draws from a typed
+evidence-informed technique catalog in `lib/agents/research-techniques.ts`,
+documented in `docs/EVIDENCE_INFORMED_TECHNIQUES.md`.
 
 There are two entry points. **Inbound SMS** (`/api/sms/inbound`) is a Telnyx
 webhook that verifies the signature, then either runs SMS compliance keywords
@@ -34,6 +36,9 @@ matches each family's local hour and minute against their preferred time,
 generates one age- and interest-tuned quest per child, and sends it. Quests from
 the first 50 families are flagged `pending` for human QA via the admin review
 queue (`/admin/review` + `/api/admin/review-queue`).
+**The dinner-conversation cron** (`/api/cron/dinner-conversation`) uses the same
+30-minute cadence for opted-in families, but sends one family-level dinner
+question instead of creating a quest row.
 
 ```mermaid
 flowchart TD
@@ -44,6 +49,7 @@ flowchart TD
     subgraph App[Next.js app on Vercel]
         Inbound["/api/sms/inbound<br/>(verify + route)"]
         Cron["/api/cron/daily-quest<br/>(match local time)"]
+        DinnerCron["/api/cron/dinner-conversation<br/>(match dinner time)"]
         Admin["/admin/review +<br/>/api/admin/review-queue"]
 
         subgraph Lib[lib]
@@ -60,10 +66,12 @@ flowchart TD
 
     Parent -->|texts Elsy| Telnyx -->|webhook| Inbound
     Scheduler -->|30-minute GET| Cron
+    Scheduler -->|30-minute GET| DinnerCron
 
     Inbound --> Onboard
     Inbound --> Agents
     Cron --> Agents
+    DinnerCron --> Agents
     Agents --> OpenAI
     Onboard --> DB
     Agents --> DB
@@ -71,6 +79,7 @@ flowchart TD
 
     Inbound --> TelnyxLib
     Cron --> TelnyxLib
+    DinnerCron --> TelnyxLib
     TelnyxLib -->|outbound SMS| Telnyx -->|quest / reply| Parent
 
     Reviewer --> Admin --> DB
@@ -95,6 +104,8 @@ app/
   api/
     sms/inbound/      — Telnyx webhook, orchestrates all SMS logic
     cron/daily-quest/ — scheduler route for quest delivery
+    cron/dinner-conversation/ — scheduler route for dinner questions
+    admin/dinner-nudges/ — guarded one-time setup nudge for existing families
     health/           — Health check
 lib/
   agents/             — AI reasoning (quest generation, response interpretation)
@@ -103,6 +114,7 @@ lib/
   onboarding.ts       — Onboarding state machine
 docs/
   ARCHITECTURE.md     — Architecture decisions
+  EVIDENCE_INFORMED_TECHNIQUES.md — Research-backed quest methodology catalog
 ```
 
 ## Data model
@@ -110,12 +122,14 @@ docs/
 ```
 families  ──→  children  ──→  quests
     ├────→  sms_guardrail_events
-    └────→  family_learning_events
+    ├────→  family_learning_events
+    └────→  dinner_conversations
 ```
 
-- **families** — phone, parent name, preferred quest time, timezone, SMS opt-in status, dinner conversation preference, onboarding step
+- **families** — phone, parent name, preferred quest time, timezone, SMS opt-in status, dinner conversation preference/time/nudge state, onboarding step
 - **children** — one profile per child, with name, age, and interests (linked to a family)
 - **quests** — prompt, mission, follow-up, skill, mission completion status, child response (linked to a child)
+- **dinner_conversations** — sent dinner-table questions, parent moves, follow-ups, skills, and local send date
 - **sms_guardrail_events** — per-phone/family SMS guardrail counters and blocked-event reasons, without storing message content
 - **family_learning_events** — durable personalization notes extracted from family replies, suggestions, preferences, avoidances, and successful quest patterns
 
@@ -189,6 +203,34 @@ Schedule: 0,30 * * * * (every 30 minutes, UTC)
 
 `CRON_SECRET` must be set in Vercel for Production. Do not store the secret in this repository. The cron runs every 30 minutes because onboarding accepts whole-hour and half-hour daily quest times, and `/api/cron/daily-quest` only sends when the family's preferred local hour and minute match. The route sends each child profile at most one quest per local day.
 
+### Dinner conversation scheduler (production)
+
+Optional dinner questions use native Vercel Cron too:
+
+```txt
+Path: /api/cron/dinner-conversation
+Schedule: 0,30 * * * * (every 30 minutes, UTC)
+```
+
+Families opt in by replying YES during onboarding, then choosing a dinner
+question time such as `6pm` or `6:30pm`. Existing completed families can reply
+**DINNER** to set it up or **DINNER OFF** to pause it. Dinner prompts are
+family-level SMS messages and do not create quest rows or mission completions.
+
+For current opted-in SMS families who never saw the dinner setup question, use
+the guarded admin route:
+
+```bash
+# Dry run candidates
+curl -H "Authorization: Bearer YOUR_ADMIN_SECRET" https://elsey.app/api/admin/dinner-nudges
+
+# Send the one-time nudge
+curl -X POST https://elsey.app/api/admin/dinner-nudges \
+  -H "Authorization: Bearer YOUR_ADMIN_SECRET" \
+  -H "Content-Type: application/json" \
+  -d '{"send":true,"limit":100}'
+```
+
 ### Quest review queue (first 50 families)
 
 Quests from the first 50 families are flagged `review_status: pending` for human QA.
@@ -220,6 +262,8 @@ Inbound SMS handles standard keywords before quest logic:
 - **QUEST** / **NEW MISSION** (also QUEST NOW, NEW QUEST, ANOTHER QUEST, NEXT MISSION, SEND QUEST, START MISSION, TODAY'S QUEST) — sends an on-demand quest after onboarding is complete
 - **QUEST FOR [child name]** / **NEW MISSION FOR [child name]** — sends an on-demand quest for a specific child profile
 - **ADD CHILD** (also ADD ANOTHER CHILD, NEW CHILD, ADD KID, ADD SIBLING) — adds another child profile with its own age and interests
+- **DINNER** / **DINNER [time]** — starts optional dinner-question setup or sets it immediately, e.g. DINNER 6:30PM
+- **DINNER OFF** — pauses optional dinner questions while keeping daily quests active
 - **SETTINGS** (also SETUP, CHANGE TIME, UPDATE TIMEZONE, RESET ONBOARDING) — restarts the daily-time/timezone setup for completed families
 
 ### SMS abuse guardrails
@@ -237,7 +281,7 @@ Guardrail counters are stored in `sms_guardrail_events` with event type, status,
 
 ### Timezone-aware daily quests
 
-Onboarding asks for US timezone after preferred send time, then asks whether the family wants optional dinner questions for richer family conversation. The dinner preference is persisted as `families.dinner_conversation_opt_in` for a future table-time delivery flow; daily quest delivery is unchanged for now.
+Onboarding asks for US timezone after preferred send time, then asks whether the family wants optional dinner questions for richer family conversation. If the parent replies YES, Elsy asks for a dinner question time and persists `families.dinner_conversation_opt_in`, `families.dinner_conversation_time`, and setup timestamps. Daily quest delivery is unchanged.
 
 Completing onboarding does not send a quest automatically; families can reply **QUEST**, **NEW MISSION**, or **QUEST FOR [child name]** for one immediately, or wait for the 30-minute scheduler. The scheduler matches each family's **local hour and minute** (not UTC) and skips child profiles who already received a quest that local day.
 
@@ -245,6 +289,7 @@ Apply migration `20250613160000_sms_opt_in_and_timezone.sql` in Supabase if not 
 Apply migration `20260627045600_dinner_conversation_opt_in.sql` to add the dinner preference column.
 Apply migration `20260626220504_sms_abuse_guardrails.sql` to add SMS guardrail event logging and indexes.
 Apply migration `20260702212301_child_personalization_indexes.sql` to add multi-child routing indexes.
+Apply migration `20260702214957_dinner_conversation_flow.sql` to add dinner scheduling and one-time nudge tracking.
 
 ### Mission completion persistence
 
@@ -261,8 +306,10 @@ Apply migration `20260702211407_family_learning_events.sql` to add durable famil
 |---|---|---|
 | `/api/sms/inbound` | POST | Telnyx webhook — handles all inbound SMS |
 | `/api/cron/daily-quest` | GET | Sends daily quests to families at their preferred time |
+| `/api/cron/dinner-conversation` | GET | Sends optional dinner-table questions to opted-in families |
 | `/api/health` | GET | Health check |
 | `/api/test-quest` | GET | Generate a sample quest (local dev only) |
 | `/api/test-interpret` | GET | Generate a sample Elsy reply (local dev only) |
 | `/api/admin/review-queue` | GET, PATCH | Human review queue for first 50 families |
+| `/api/admin/dinner-nudges` | GET, POST | Dry-run or send one-time dinner setup nudges |
 | `/admin/review` | GET | Web UI for quest review queue |

@@ -1,12 +1,14 @@
 import { openai } from "@/lib/openai";
 
 import {
+  COGNITIVE_SKILLS,
   ELSY_SYSTEM_PROMPT,
   formatFamilyLearning,
   formatQuestHistory,
   getAgeGuidance,
   suggestNextSkills,
 } from "./elsy-system";
+import { formatTechniqueGuidance, selectQuestTechniques } from "./research-techniques";
 import { formatTemporalContext } from "./temporal-context";
 import { validateQuest } from "./quest-quality";
 import type { FamilyQuestContext } from "./types";
@@ -26,6 +28,7 @@ function buildQuestPrompt(context: FamilyQuestContext, revisionNotes?: string[])
     ? `Parent name: ${context.parentName} (warmly acknowledge when natural — SMS is to the parent)`
     : "Parent name: unknown";
   const isFirstQuest = context.questNumber <= 1 || context.recentQuests.length === 0;
+  const techniqueGuidance = formatTechniqueGuidance(selectQuestTechniques(context));
   const launchGuidance = isFirstQuest
     ? `
 First quest launch moment:
@@ -61,6 +64,9 @@ ${formatQuestHistory(context.recentQuests)}
 Durable family learning — use this to personalize future quests, honor preferences, repeat what worked, and avoid what did not:
 ${formatFamilyLearning(context.learningEvents)}
 
+Evidence-informed method lens — invisible design layer. Choose ONE best-fit lens below and make the quest feel natural. Do not mention research, citations, technique names, "brain training", or future-skills jargon to the parent:
+${techniqueGuidance}
+
 Prefer a fresh cognitive skill from: ${suggestNextSkills(context.recentQuests)}
 
 ${launchGuidance}
@@ -71,7 +77,7 @@ Quality bar:
 - mission: 2–10 min real-world action parent + child can do without prep; one clear action beats a list; include a tiny parent facilitation move when natural (notice together, name a detail, wait, compare, or try one change)
 - followUp: one Socratic question for later — invite evidence, perspective, creative alternatives, or "did your idea change?"
 - title: 2–4 words, poetic but clear (e.g. "Shadow Detective", "Sound Collector")
-- skill: one primary cognitive skill trained today
+- skill: one primary cognitive skill trained today from this vocabulary: ${COGNITIVE_SKILLS.join(" | ")}
 - weave in an interest when it fits naturally — never forced
 - if a recent child response is listed, optionally nod to their curiosity arc
 - if durable family learning lists preferences or avoidances, follow them unless they conflict with safety or the core real-world quest format
@@ -86,7 +92,7 @@ Return valid JSON only:
   "prompt": "one curiosity question",
   "mission": "small real-world activity",
   "followUp": "one follow-up question ending with ?",
-  "skill": "observation | comparison | questioning | pattern-finding | perspective-taking | listening | hypothesis-testing | kindness-in-action | metacognition | creative-thinking"
+  "skill": "${COGNITIVE_SKILLS.join(" | ")}"
 }
 `;
 }
