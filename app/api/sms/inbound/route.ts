@@ -32,6 +32,7 @@ import {
 import {
   createQuest,
   getAwaitingQuestsForChildren,
+  getLatestQuestForChild,
   getLatestQuestForChildren,
   hasQuestOnLocalDay,
   saveElsyReply,
@@ -131,7 +132,7 @@ function splitChildPrefixedReply(children: ChildRow[], body: string) {
   return null;
 }
 
-function childForQuest(quest: QuestRow, children: ChildRow[]) {
+function childForQuest(quest: { child_id: string }, children: ChildRow[]) {
   return children.find((child) => child.id === quest.child_id) ?? null;
 }
 
@@ -232,11 +233,40 @@ function isLikelyFeedbackOrPreference(body: string) {
     /\b(prefer|preference|suggestion|feedback|for future|next time)\b/.test(
       normalizedBody,
     ) ||
+    /\b(?:do not|don't|dont|did not|didn't|didnt|not|never)\s+(?:like|love|enjoy|want)\b/.test(
+      normalizedBody,
+    ) ||
+    /\b(?:hate|hated|boring|confusing|generic|formulaic|repetitive|too easy|too hard)\b/.test(
+      normalizedBody,
+    ) ||
+    /\b(?:quest|mission|prompt)\b.*\b(?:shorter|longer|harder|easier|outside|indoors|hands-on|hands on|creative|math|science|reading|screen)\b/.test(
+      normalizedBody,
+    ) ||
+    /\b(?:shorter|longer|harder|easier|more|less)\b.*\b(?:quests?|missions?|prompts?)\b/.test(
+      normalizedBody,
+    ) ||
     /^(?:please )?(?:make|try|send|avoid|use) (?:future |the |these |more |less |shorter |longer |harder |easier )?(?:quests?|missions?)/.test(
       normalizedBody,
     ) ||
     /^(?:can|could) you (?:make|try|send|avoid|use) /.test(normalizedBody)
   );
+}
+
+function getFeedbackAcknowledgement(body: string) {
+  const normalizedBody = normalizeSmsBody(body);
+
+  if (
+    /\b(?:do not|don't|dont|did not|didn't|didnt|not|never)\s+(?:like|love|enjoy|want)\b/.test(
+      normalizedBody,
+    ) ||
+    /\b(?:hate|hated|boring|confusing|generic|formulaic|repetitive)\b/.test(
+      normalizedBody,
+    )
+  ) {
+    return "Got it - I'll avoid missions like that and tune the next ones.";
+  }
+
+  return "Got it - I'll remember that for future quests.";
 }
 
 async function saveFallbackParentNote({
@@ -250,16 +280,18 @@ async function saveFallbackParentNote({
   questId: string;
   body: string;
 }) {
+  const isQuestFeedback = /\b(?:quest|mission|prompt)\b/.test(normalizeSmsBody(body));
+
   await saveFamilyLearningEvents({
     familyId,
     childId,
     questId,
     events: [
       {
-        kind: "parent_note",
-        summary: `Parent note for future quest tuning: ${body}`,
+        kind: isQuestFeedback ? "quest_feedback" : "parent_note",
+        summary: `Parent feedback for future quest tuning: ${body}`,
         evidence: body,
-        confidence: 0.35,
+        confidence: 0.45,
       },
     ],
   });
@@ -413,6 +445,66 @@ async function createQuestReplyMessage({
   }
 }
 
+async function createCompletedQuestFeedbackMessage({
+  from,
+  family,
+  child,
+  quest,
+  body,
+}: {
+  from: string;
+  family: FamilyRow;
+  child: ChildRow;
+  quest: QuestRow;
+  body: string;
+}) {
+  const learningLimit = await checkAndRecordAction({
+    phone: from,
+    familyId: family.id,
+    eventType: "interpretation_request",
+    bodyLength: body.length,
+  });
+
+  if (!learningLimit.allowed) {
+    await saveFallbackParentNote({
+      familyId: family.id,
+      childId: child.id,
+      questId: quest.id,
+      body,
+    });
+
+    return getFeedbackAcknowledgement(body);
+  }
+
+  try {
+    const learning = await learnFromQuestReply(
+      await buildQuestReplyLearningContext(family, child, quest, body),
+    );
+
+    if (learning.memories.length > 0) {
+      await saveFamilyLearningEvents({
+        familyId: family.id,
+        childId: child.id,
+        questId: quest.id,
+        events: learning.memories,
+      });
+
+      return learning.acknowledgement || getFeedbackAcknowledgement(body);
+    }
+  } catch (learningError) {
+    console.error("learnFromQuestReply completed-quest feedback error:", learningError);
+  }
+
+  await saveFallbackParentNote({
+    familyId: family.id,
+    childId: child.id,
+    questId: quest.id,
+    body,
+  });
+
+  return getFeedbackAcknowledgement(body);
+}
+
 async function handleOversizedMessage(from: string, bodyLength: number) {
   const existingFamily = await findFamilyByPhone(from);
   const familyId = existingFamily?.id ?? null;
@@ -514,12 +606,36 @@ async function handleInboundMessage(from: string, body: string) {
             const exampleChild = children[0]?.name ?? "their name";
             replyText = `Which child is this for? Reply with their name first, like "${exampleChild}: what they noticed." Children I have: ${childNameList(children)}.`;
           }
-        } else if (await getLatestQuestForChildren(childIds)) {
-          replyText =
-            "I already saved the latest quest response. Reply QUEST FOR a child name for a new one, ADD CHILD for another profile, SETTINGS to update your daily time, or HELP for support.";
         } else {
-          replyText =
-            "You're all set. Elsy will send each child's first quest at your preferred time. Reply QUEST FOR a child name if you'd like one now.";
+          const latestQuest = await getLatestQuestForChildren(childIds);
+
+          if (latestQuest && isLikelyFeedbackOrPreference(body)) {
+            const namedChild = findNamedChild(children, body);
+            const targetQuest = namedChild
+              ? await getLatestQuestForChild(namedChild.id)
+              : latestQuest;
+            const targetChild = targetQuest ? childForQuest(targetQuest, children) : null;
+
+            if (targetQuest && targetChild) {
+              replyText = await createCompletedQuestFeedbackMessage({
+                from,
+                family: existingFamily,
+                child: targetChild,
+                quest: targetQuest,
+                body,
+              });
+            } else {
+              replyText = getFeedbackAcknowledgement(body);
+            }
+          } else if (latestQuest && isLikelySmsQuestion(body)) {
+            replyText = getQuestResponseGuidance();
+          } else if (latestQuest) {
+            replyText =
+              "I already saved the latest quest response. Reply NEW MISSION for a new one, DINNER to set dinner questions, SETTINGS to update your daily time, or HELP for support.";
+          } else {
+            replyText =
+              "You're all set. Elsy will send each child's first quest at your preferred time. Reply QUEST FOR a child name if you'd like one now.";
+          }
         }
       } else {
         replyText =
