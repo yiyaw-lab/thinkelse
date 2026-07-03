@@ -283,6 +283,7 @@ Inbound SMS handles standard keywords before quest logic:
 - **HELLO** — re-subscribes if opted out; otherwise treated as onboarding for new numbers
 - **QUEST** / **NEW MISSION** (also QUEST NOW, NEW QUEST, ANOTHER QUEST, NEXT MISSION, SEND QUEST, START MISSION, TODAY'S QUEST) — sends an on-demand quest after onboarding is complete
 - **QUEST FOR [child name]** / **NEW MISSION FOR [child name]** — sends an on-demand quest for a specific child profile
+- **WHY** (also WHY THIS, PARENT CONTEXT, RESOURCE) — sends parent-only context and one optional resource link for the latest mission or dinner question
 - **ADD CHILD** (also ADD ANOTHER CHILD, NEW CHILD, ADD KID, ADD SIBLING) — adds another child profile with its own age and interests
 - **DINNER** / **DINNER [time]** / **DINNER ON [time]** — starts optional dinner-question setup or sets it immediately, e.g. DINNER 6:30PM
 - **DINNER OFF** — pauses optional dinner questions while keeping daily quests active

@@ -11,6 +11,23 @@ const STOP_KEYWORDS = new Set([
 
 const HELP_KEYWORDS = new Set(["help", "info"]);
 
+const PARENT_CONTEXT_KEYWORDS = new Set([
+  "why",
+  "why this",
+  "why this dinner",
+  "why this dinner question",
+  "why this mission",
+  "why this prompt",
+  "why this quest",
+  "why this question",
+  "parent context",
+  "context",
+  "resource",
+  "resources",
+  "article",
+  "articles",
+]);
+
 const START_KEYWORDS = new Set(["start", "unstop", "yes"]);
 
 const SETTINGS_KEYWORDS = new Set([
@@ -179,6 +196,10 @@ export function isHelpKeyword(body: string): boolean {
   return HELP_KEYWORDS.has(normalizeSmsCommand(body));
 }
 
+export function isParentContextKeyword(body: string): boolean {
+  return PARENT_CONTEXT_KEYWORDS.has(normalizeSmsCommand(body));
+}
+
 export function isStartKeyword(body: string): boolean {
   return START_KEYWORDS.has(normalizeSmsCommand(body));
 }
@@ -246,7 +267,7 @@ export function getStopConfirmation(): string {
 }
 
 export function getHelpMessage(): string {
-  return `Else SMS Program: daily ask/try/later curiosity quests and optional dinner questions for family conversation. Reply QUEST or NEW MISSION after onboarding. Reply QUEST FOR [child name] for a specific child. Reply ADD CHILD to add another child profile. Reply DINNER to set dinner questions, DINNER OFF to pause them, SETTINGS to update your daily quest time. Msg frequency varies. Msg & data rates may apply. Reply STOP to opt out. Support: ${SITE.email} · ${SITE.url}/start`;
+  return `Else SMS Program: daily ask/try/later curiosity quests and optional dinner questions for family conversation. Reply QUEST or NEW MISSION after onboarding. Reply QUEST FOR [child name] for a specific child. Reply WHY after a prompt for parent context and one optional resource. Reply ADD CHILD to add another child profile. Reply DINNER to set dinner questions, DINNER OFF to pause them, SETTINGS to update your daily quest time. Msg frequency varies. Msg & data rates may apply. Reply STOP to opt out. Support: ${SITE.email} · ${SITE.url}/start`;
 }
 
 export function getStartConfirmation(): string {
