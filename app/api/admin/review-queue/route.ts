@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+import { isAdminRequestAuthorized } from "@/lib/admin/auth";
 import {
   getPendingReviewQuests,
   updateQuestReview,
@@ -7,15 +8,8 @@ import {
 } from "@/lib/db/quests";
 import { EARLY_COHORT_LIMIT } from "@/lib/db/families";
 
-function isAuthorized(request: Request): boolean {
-  const authHeader = request.headers.get("authorization");
-  const secret = process.env.ADMIN_SECRET ?? process.env.CRON_SECRET;
-  if (!secret) return process.env.NODE_ENV !== "production";
-  return authHeader === `Bearer ${secret}`;
-}
-
 export async function GET(request: Request) {
-  if (!isAuthorized(request)) {
+  if (!isAdminRequestAuthorized(request)) {
     return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401 });
   }
 
@@ -30,7 +24,7 @@ export async function GET(request: Request) {
 }
 
 export async function PATCH(request: Request) {
-  if (!isAuthorized(request)) {
+  if (!isAdminRequestAuthorized(request)) {
     return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401 });
   }
 

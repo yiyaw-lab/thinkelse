@@ -16,21 +16,9 @@ import {
   DEFAULT_TIMEZONE,
   formatLocalDateKey,
   getLocalTimeParts,
-  type PreferredTimeParts,
+  isPreferredDeliveryWindow,
   parsePreferredTime,
 } from "@/lib/timezone";
-
-function isPreferredDeliveryWindow(
-  preferredTime: PreferredTimeParts,
-  localTime: PreferredTimeParts,
-): boolean {
-  if (preferredTime.hour !== localTime.hour) {
-    return false;
-  }
-
-  const minuteDelta = localTime.minute - preferredTime.minute;
-  return minuteDelta >= 0 && minuteDelta < 30;
-}
 
 export async function GET(request: Request) {
   // Production cron is configured in vercel.json. Require the shared bearer
