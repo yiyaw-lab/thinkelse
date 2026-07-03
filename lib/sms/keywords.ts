@@ -54,12 +54,18 @@ const ADD_CHILD_KEYWORDS = new Set([
 const DINNER_SETUP_KEYWORDS = new Set([
   "dinner",
   "dinner on",
+  "dinner yes",
   "dinner questions",
   "dinner question",
+  "dinner conversation",
+  "dinner conversations",
+  "dinner convo",
   "setup dinner",
   "set up dinner",
   "dinner setup",
   "start dinner",
+  "enable dinner",
+  "turn dinner on",
 ]);
 
 const DINNER_OFF_KEYWORDS = new Set([
@@ -159,20 +165,24 @@ export function normalizeSmsBody(body: string): string {
   return body.trim().toLowerCase().replace(/\s+/g, " ");
 }
 
+function normalizeSmsCommand(body: string): string {
+  return normalizeSmsBody(body).replace(/[.!?]+$/g, "");
+}
+
 export function isStopKeyword(body: string): boolean {
-  return STOP_KEYWORDS.has(normalizeSmsBody(body));
+  return STOP_KEYWORDS.has(normalizeSmsCommand(body));
 }
 
 export function isHelpKeyword(body: string): boolean {
-  return HELP_KEYWORDS.has(normalizeSmsBody(body));
+  return HELP_KEYWORDS.has(normalizeSmsCommand(body));
 }
 
 export function isStartKeyword(body: string): boolean {
-  return START_KEYWORDS.has(normalizeSmsBody(body));
+  return START_KEYWORDS.has(normalizeSmsCommand(body));
 }
 
 export function isSettingsKeyword(body: string): boolean {
-  const normalizedBody = normalizeSmsBody(body);
+  const normalizedBody = normalizeSmsCommand(body);
   return (
     SETTINGS_KEYWORDS.has(normalizedBody) ||
     SETTINGS_PATTERNS.some((pattern) => pattern.test(normalizedBody))
@@ -180,7 +190,7 @@ export function isSettingsKeyword(body: string): boolean {
 }
 
 export function isAddChildKeyword(body: string): boolean {
-  const normalizedBody = normalizeSmsBody(body);
+  const normalizedBody = normalizeSmsCommand(body);
   return (
     ADD_CHILD_KEYWORDS.has(normalizedBody) ||
     ADD_CHILD_PATTERNS.some((pattern) => pattern.test(normalizedBody))
@@ -188,7 +198,7 @@ export function isAddChildKeyword(body: string): boolean {
 }
 
 export function isDinnerSetupKeyword(body: string): boolean {
-  const normalizedBody = normalizeSmsBody(body);
+  const normalizedBody = normalizeSmsCommand(body);
   return (
     DINNER_SETUP_KEYWORDS.has(normalizedBody) ||
     DINNER_SETUP_PATTERNS.some((pattern) => pattern.test(normalizedBody))
@@ -196,7 +206,7 @@ export function isDinnerSetupKeyword(body: string): boolean {
 }
 
 export function isDinnerOffKeyword(body: string): boolean {
-  const normalizedBody = normalizeSmsBody(body);
+  const normalizedBody = normalizeSmsCommand(body);
   return (
     DINNER_OFF_KEYWORDS.has(normalizedBody) ||
     DINNER_OFF_PATTERNS.some((pattern) => pattern.test(normalizedBody))
@@ -204,11 +214,11 @@ export function isDinnerOffKeyword(body: string): boolean {
 }
 
 export function isHelloKeyword(body: string): boolean {
-  return normalizeSmsBody(body) === "hello";
+  return normalizeSmsCommand(body) === "hello";
 }
 
 export function isQuestRequestKeyword(body: string): boolean {
-  const normalizedBody = normalizeSmsBody(body);
+  const normalizedBody = normalizeSmsCommand(body);
   return (
     QUEST_REQUEST_KEYWORDS.has(normalizedBody) ||
     QUEST_REQUEST_PATTERNS.some((pattern) => pattern.test(normalizedBody))
