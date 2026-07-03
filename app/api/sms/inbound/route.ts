@@ -39,15 +39,18 @@ import {
   updateQuestResponse,
 } from "@/lib/db/quests";
 import { saveFamilyLearningEvents } from "@/lib/db/family-learning";
+import { getLatestDinnerConversation } from "@/lib/db/dinner-conversations";
 import { reviewStatusForFamily } from "@/lib/quests/review-policy";
 import { handleSmsKeyword } from "@/lib/sms/handle-keyword";
 import { sendSms } from "@/lib/telnyx/sendSms";
+import { formatParentResourceMessage } from "@/lib/agents/parent-resource-cards";
 import {
   formatInterpretationMessage,
   formatQuestMessage,
 } from "@/lib/sms/format-quest";
 import {
   isLikelySmsQuestion,
+  isParentContextKeyword,
   isQuestRequestKeyword,
   normalizeSmsBody,
 } from "@/lib/sms/keywords";
@@ -214,6 +217,57 @@ async function createOnDemandQuestMessage(
   });
 
   return formatQuestMessage(generatedQuest, child.name);
+}
+
+async function createParentResourceReply(
+  family: FamilyRow,
+  children: ChildRow[],
+): Promise<string> {
+  if (children.length === 0) {
+    return "Reply WHY after Elsy sends a mission or dinner question, and I'll send parent context plus one optional resource.";
+  }
+
+  const childIds = children.map((child) => child.id);
+  const [latestQuest, latestDinner] = await Promise.all([
+    getLatestQuestForChildren(childIds),
+    getLatestDinnerConversation(family.id),
+  ]);
+
+  if (!latestQuest && !latestDinner) {
+    return "Reply WHY after Elsy sends a mission or dinner question, and I'll send parent context plus one optional resource.";
+  }
+
+  const latestQuestTime = latestQuest?.created_at
+    ? new Date(latestQuest.created_at as string).getTime()
+    : 0;
+  const latestDinnerTime = latestDinner?.sent_at
+    ? new Date(latestDinner.sent_at).getTime()
+    : 0;
+
+  if (latestDinner && latestDinnerTime >= latestQuestTime) {
+    return formatParentResourceMessage({
+      kind: "dinner",
+      prompt: latestDinner.question,
+      mission: latestDinner.parent_move,
+      followUp: latestDinner.follow_up,
+      skill: latestDinner.skill,
+    });
+  }
+
+  if (latestQuest) {
+    const child = childForQuest(latestQuest, children);
+    return formatParentResourceMessage({
+      kind: "quest",
+      title: latestQuest.title,
+      prompt: latestQuest.prompt,
+      mission: latestQuest.mission,
+      followUp: latestQuest.follow_up,
+      skill: latestQuest.skill,
+      childAge: child?.age ?? null,
+    });
+  }
+
+  return "Reply WHY after Elsy sends a mission or dinner question, and I'll send parent context plus one optional resource.";
 }
 
 function getQuestResponseGuidance(): string {
@@ -572,7 +626,9 @@ async function handleInboundMessage(from: string, body: string) {
     if (currentStep === "complete") {
       const children = await getChildrenForFamily(existingFamily.id);
 
-      if (isQuestRequestKeyword(body)) {
+      if (isParentContextKeyword(body)) {
+        replyText = await createParentResourceReply(existingFamily, children);
+      } else if (isQuestRequestKeyword(body)) {
         replyText = await createOnDemandQuestMessage(existingFamily, body);
       } else if (children.length > 0) {
         const childIds = children.map((child) => child.id);

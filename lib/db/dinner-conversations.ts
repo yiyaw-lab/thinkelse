@@ -25,6 +25,25 @@ export async function getRecentDinnerConversations(familyId: string, limit = 6) 
   return (data ?? []) as DinnerConversationRow[];
 }
 
+export async function getLatestDinnerConversation(
+  familyId: string,
+): Promise<DinnerConversationRow | null> {
+  const { data, error } = await supabaseAdmin
+    .from("dinner_conversations")
+    .select("question, parent_move, follow_up, skill, local_date_key, sent_at")
+    .eq("family_id", familyId)
+    .order("sent_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (error) {
+    console.error("getLatestDinnerConversation error:", error);
+    return null;
+  }
+
+  return data as DinnerConversationRow | null;
+}
+
 export async function createDinnerConversationLog({
   familyId,
   question,
