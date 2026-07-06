@@ -16,6 +16,7 @@ import type { FamilyQuestContext } from "./types";
 
 export type GeneratedQuest = {
   title: string;
+  whyThis: string;
   prompt: string;
   mission: string;
   followUp: string;
@@ -79,6 +80,7 @@ ${launchGuidance}
 Quality bar:
 - audience: parent reads the SMS and shares with ${context.childName} — never write as if the child is texting Elsy
 - anticipation: the parent should think "I want to try this today." Give the quest a small hook, tension, or promised payoff: a surprising answer, a clue to test, a fair rule to invent, a tiny redesign, a changed mind, or a choice with tradeoffs.
+- whyThis: one parent-facing sentence, 12–24 words, explaining why this was selected for this child/family and how it helps them think else together. No citations, grand claims, or research jargon.
 - prompt: one vivid ask-aloud curiosity question ${context.childName} can hold all day (you may use their name); concrete enough to picture; no single right answer
 - mission: 2–10 min real-world action parent + child can do without prep; one clear action beats a list; include a tiny parent facilitation move when natural (notice together, name a detail, wait, compare, or try one change)
 - followUp: one Socratic question for later — invite evidence, perspective, creative alternatives, or "did your idea change?"
@@ -98,6 +100,7 @@ ${revisionBlock}
 Return valid JSON only:
 {
   "title": "short title",
+  "whyThis": "one short parent-facing rationale",
   "prompt": "one curiosity question",
   "mission": "small real-world activity",
   "followUp": "one follow-up question ending with ?",
@@ -141,6 +144,8 @@ function buildFallbackQuest(context: FamilyQuestContext): GeneratedQuest {
   const fallbackPool: GeneratedQuest[] = [
     {
       title: "Trust the Clue",
+      whyThis:
+        `This gives ${childName} a tiny evidence habit you can practice together before deciding what to trust.`,
       prompt: `${childName}, when someone makes a guess, what kind of clue would help you decide whether to trust it?`,
       mission:
         "Make one tiny prediction about a door, cup, backpack, or toy and check one clue to see if your idea gets stronger.",
@@ -149,6 +154,8 @@ function buildFallbackQuest(context: FamilyQuestContext): GeneratedQuest {
     },
     {
       title: "Fair Referee",
+      whyThis:
+        `This turns fairness into something ${childName} can test with you, not just talk about abstractly.`,
       prompt: `${childName}, when two people both want the same thing, what would make the rule fair?`,
       mission:
         "Pick one shared object today and invent two possible turn-taking rules. Ask who each rule helps most.",
@@ -157,6 +164,8 @@ function buildFallbackQuest(context: FamilyQuestContext): GeneratedQuest {
     },
     {
       title: "Tiny Redesign",
+      whyThis:
+        `This helps ${childName} see everyday design choices and imagine how small changes affect people.`,
       prompt: `${childName}, what is one small thing at home that could work better for someone else?`,
       mission:
         "Choose one everyday object or routine and imagine one tiny change. Say who it helps and what tradeoff it creates.",

@@ -172,7 +172,7 @@ function wordCount(text: string): number {
 }
 
 function questBlob(quest: GeneratedQuest): string {
-  return `${quest.title ?? ""} ${quest.prompt ?? ""} ${quest.mission ?? ""} ${quest.followUp ?? ""}`.toLowerCase();
+  return `${quest.title ?? ""} ${quest.whyThis ?? ""} ${quest.prompt ?? ""} ${quest.mission ?? ""} ${quest.followUp ?? ""}`.toLowerCase();
 }
 
 function surfaceTerms(text: string): Set<string> {
@@ -224,6 +224,7 @@ export function validateQuest(
 ): string[] {
   const issues: string[] = [];
   const title = quest.title ?? "";
+  const whyThis = quest.whyThis ?? "";
   const prompt = quest.prompt ?? "";
   const mission = quest.mission ?? "";
   const followUp = quest.followUp ?? "";
@@ -231,16 +232,30 @@ export function validateQuest(
   const blob = questBlob(quest);
 
   if (!title.trim()) issues.push("title is empty");
+  if (!whyThis.trim()) issues.push("whyThis is empty");
   if (!prompt.trim()) issues.push("prompt is empty");
   if (!mission.trim()) issues.push("mission is empty");
   if (!followUp.trim()) issues.push("followUp is empty");
   if (!skill.trim()) issues.push("skill is empty");
 
   if (prompt.length > 200) issues.push("prompt too long for SMS");
+  if (whyThis.length > 180) issues.push("whyThis too long for SMS");
   if (mission.length > 220) issues.push("mission too long for SMS");
   if (followUp.length > 160) issues.push("followUp too long for SMS");
   if (!prompt.trim().endsWith("?")) {
     issues.push("prompt must be one curiosity question ending with ?");
+  }
+  if (whyThis && wordCount(whyThis) > 28) {
+    issues.push("whyThis should be one short parent-facing sentence");
+  }
+  if (/\b(?:study|studies|research proves|neuroscience|brain development|guaranteed)\b/i.test(whyThis)) {
+    issues.push("whyThis should avoid research jargon or overclaims");
+  }
+  if (
+    whyThis &&
+    !/\b(?:together|family|you and|with you|parent)\b/i.test(whyThis)
+  ) {
+    issues.push("whyThis should show how this brings the family into the thinking");
   }
   if (!followUp.trim().endsWith("?")) {
     issues.push("followUp must be a question ending with ?");
