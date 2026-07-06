@@ -56,6 +56,13 @@ If it opens up:
 Dinner prompts are optional, reply-free, and should not create quest rows or
 mission completions.
 
+Parent companion:
+
+Parents can reply `WHY` after a quest or dinner question for parent-only
+context. That response should include why the prompt was shaped this way, one
+facilitation move, what to watch for, an if-stuck recovery, one optional source,
+and a safety note. Keep research labels and citations out of the main prompt.
+
 ## Dinner Conversation Quality Bar
 
 Dinner questions should feel like something a parent would actually want to ask

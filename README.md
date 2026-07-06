@@ -130,6 +130,7 @@ docs/
   LEARNING_ARCS.md — Week-level quest continuity layer
   DINNER_CONVERSATION_PRODUCT.md — Table-ready dinner conversation contract
   WORLD_CONTEXT_CARDS.md — Current-issue-adjacent dinner card contract
+  PARENT_COMPANION_LAYER.md — WHY response and parent-context contract
   EVIDENCE_INFORMED_TECHNIQUES.md — Research-backed quest methodology catalog
 ```
 
