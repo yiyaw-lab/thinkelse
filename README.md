@@ -129,6 +129,7 @@ docs/
   FAMILY_MEMORY_ENGINE.md — Schema-compatible family learning profile contract
   LEARNING_ARCS.md — Week-level quest continuity layer
   DINNER_CONVERSATION_PRODUCT.md — Table-ready dinner conversation contract
+  WORLD_CONTEXT_CARDS.md — Current-issue-adjacent dinner card contract
   EVIDENCE_INFORMED_TECHNIQUES.md — Research-backed quest methodology catalog
 ```
 
@@ -257,7 +258,8 @@ community, disagreement, and tradeoffs. This is disabled by default. Set
 `DINNER_WORLD_CONTEXT_ENABLED=light` only after previewing outputs locally with
 `/api/test-dinner?world=1`; set `deeper` only for reviewed medium-sensitivity
 cards. The generator must not mention live headlines, parties, politicians,
-violent events, or ask children to know the news.
+violent events, or ask children to know the news. The card catalog and selector
+contract are documented in `docs/WORLD_CONTEXT_CARDS.md`.
 
 For current opted-in SMS families who never saw the dinner setup question, use
 the guarded admin route:
