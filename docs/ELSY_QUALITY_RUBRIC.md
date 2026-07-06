@@ -189,5 +189,9 @@ for quality dimensions. Automated checks can catch emptiness, length, forbidden
 phrases, repeated surfaces, weak patterns, and missing hooks. Human or LLM
 review should judge anticipation, warmth, safety, and family fit.
 
+The deterministic regression harness lives in
+`docs/ELSY_EVALUATION_HARNESS.md`, with fixtures in
+`scripts/quality-fixtures.mjs`.
+
 No automated score should override safety, parent feedback, or the newest
 family context.

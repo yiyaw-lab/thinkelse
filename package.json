@@ -8,7 +8,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "check:quality-rubric": "node scripts/check-quality-rubric.mjs"
+    "check:quality-rubric": "node scripts/check-quality-rubric.mjs",
+    "check:quality-fixtures": "node scripts/evaluate-quality-fixtures.mjs"
   },
   "dependencies": {
     "@react-spring/three": "^10.1.1",
