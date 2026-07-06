@@ -132,6 +132,7 @@ docs/
   WORLD_CONTEXT_CARDS.md — Current-issue-adjacent dinner card contract
   PARENT_COMPANION_LAYER.md — WHY response and parent-context contract
   SCHEDULER_RELIABILITY.md — Cron window semantics and dry-run observability
+  LIGHTHOUSE_PILOT_LOOP.md — Early-family feedback synthesis loop
   EVIDENCE_INFORMED_TECHNIQUES.md — Research-backed quest methodology catalog
 ```
 

@@ -43,6 +43,9 @@ jobs:
       - name: Check scheduler windows
         run: npm run check:scheduler-windows
 
+      - name: Check lighthouse pilot loop
+        run: npm run check:lighthouse-pilot
+
       - name: Typecheck
         run: npx tsc --noEmit
 
