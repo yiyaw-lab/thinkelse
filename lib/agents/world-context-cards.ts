@@ -497,6 +497,8 @@ Underlying issue: ${card.issue}
 Child-friendly frame: ${card.childFriendlyFrame}
 Skills: ${card.skills.join(", ")}
 The dinner question or follow-up must clearly reflect at least one of these focus terms without sounding like a news summary: ${card.focusTerms.join(", ")}
+Translate broad issues into a concrete table-scale example the youngest child can answer immediately. Use examples like a turn, last bite, seat, family rule, school moment, friend situation, or a game they already know.
+Do not ask the child to design a whole game, society, system, or policy. Avoid abstract words like "resource", "players", and "decision-making model" when a concrete example can carry the idea.
 Question seeds to adapt, not copy:
 ${card.dinnerQuestionSeeds.map((seed) => `- ${seed}`).join("\n")}
 Parent move seeds to adapt, not copy:
