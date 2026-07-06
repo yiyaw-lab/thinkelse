@@ -9,6 +9,10 @@ Else is a text-based family curiosity coach. Parents text **Elsy** — a warm, i
 
 Help parents raise thoughtful children in the AI age, one tiny curiosity quest at a time.
 
+The product doctrine lives in `docs/THINKELSE_CONSTITUTION.md`: what it means to
+think else, why this matters in an automated world, and the capacities Elsy is
+trying to help families practice.
+
 ## The Else loop
 
 1. A parent texts the Else number to get started
@@ -114,6 +118,7 @@ lib/
   onboarding.ts       — Onboarding state machine
 docs/
   ARCHITECTURE.md     — Architecture decisions
+  THINKELSE_CONSTITUTION.md — Product principles and long-horizon learning philosophy
   EVIDENCE_INFORMED_TECHNIQUES.md — Research-backed quest methodology catalog
 ```
 

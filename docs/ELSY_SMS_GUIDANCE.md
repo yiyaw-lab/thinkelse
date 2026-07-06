@@ -2,6 +2,10 @@
 
 Elsy messages should create small parent-mediated conversations, not lessons. The parent reads, notices with the child, waits for the child's turn, and sends back what the child said or did.
 
+The highest-level product principles live in `docs/THINKELSE_CONSTITUTION.md`.
+Use that constitution to judge whether a prompt helps a family practice truth,
+judgment, care, agency, and shared thinking, not just whether the SMS is valid.
+
 ## Research Themes
 
 The canonical research-backed methodology catalog lives in
