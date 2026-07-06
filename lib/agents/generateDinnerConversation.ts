@@ -9,6 +9,7 @@ import {
 } from "./elsy-system";
 import { formatTechniqueGuidance, selectQuestTechniques } from "./research-techniques";
 import { formatTemporalContext } from "./temporal-context";
+import { validateDinnerConversation } from "./dinner-quality";
 import {
   formatWorldContextGuidance,
   selectWorldContextCard,
@@ -20,6 +21,7 @@ import type { FamilyQuestContext } from "./types";
 
 export type GeneratedDinnerConversation = {
   question: string;
+  whyThis: string;
   parentMove: string;
   followUp: string;
   skill: string;
@@ -150,21 +152,28 @@ ${formatWorldContextGuidance(worldContextCard)}
 
 Dinner conversation bar:
 - Make this feel worth asking at dinner. Prefer a small dilemma, choice, tradeoff, perspective clash, family value, changed mind, or "how do we know?" question over passive noticing.
+- Anticipation bar: this should sound like a question someone at the table might still be talking about five minutes later. It needs a spark: a real tension, surprising angle, personal story, or safe disagreement.
 - The first question should have human stakes: fairness, honesty, trust, courage, kindness, disagreement, responsibility, promises, belonging, evidence, uncertainty, or how people should decide.
+- Make it answerable in the first 10 seconds by the youngest listed child. Anchor abstract ideas in lived dinner-scale examples: a turn, last bite, seat, family rule, game they already know, friend situation, school moment, or something from today.
+- Do not ask the child to design a whole game, system, society, or decision-making model. Avoid "players", "resource", "keeping it all to themselves", "families make decisions together", and other adult/academic abstractions unless translated into a concrete family example.
 - Use the season/time/place only as texture. Do not make the core question about air, light, breeze, clouds, sunset, or generic sensory observation.
 - If you use a child's interest, connect it to a real-life judgment or perspective, not trivia about the interest.
-- Parent move should help the parent run a better conversation: pause, invite a reason, ask for evidence, ask for the opposite view, ask another child to build on it, or ask what would change their mind.
+- Parent move should help the parent run a better conversation: start with a tiny example, pause, invite a reason, ask for evidence, ask for the opposite view, ask another child to build on it, or ask what would change their mind. Do not repeat the formula "Ask what makes you say that and invite another family member..."
 - Avoid bland frames like "What patterns do you notice..." or "Name one thing you hear, see, or feel..." unless paired with a meaningful human decision.
+- Avoid adult-seminar energy and generic facilitation. No "share your ideas", "add their ideas", "tricky choices", "players", or "what could happen in the game" phrasing.
 - If a world-context lens is present, translate it into a durable family-scale question. Do not mention the news, headlines, parties, politicians, named public figures, violent events, or adult-coded policy debates.
 - Strong examples to learn from, not copy:
   - If two people remember the same moment differently, how could we figure out what probably happened without making either person feel small?
   - When is it better to tell the truth even if it makes the next few minutes harder?
   - If our family could test one new rule this week to help everyone feel heard, what rule would you try?
+  - If two people wanted the same last bite, turn, or seat tonight, what fair rule would you try first?
+  - Think of a game you already know: when does a rule feel fair even if you lose?
   - What is something kids might notice about the world that grown-ups often miss?
 
 Quality bar:
 - This is a dinner conversation, not a quest. No mission, task list, reporting ask, homework, worksheet, trivia, screen use, or "look it up."
 - question: one table-ready question with no single right answer; it should invite evidence, uncertainty, perspective, tradeoffs, imagination, values, or a changed mind.
+- whyThis: one parent-facing sentence, 12–24 words, explaining why this was selected and how it helps the family think else together. No citations, grand claims, or research jargon.
 - parentMove: one short facilitation move the parent can use at the table, such as wait, ask what makes you say that, invite another child to add on, ask for the opposite view, or ask what evidence would change their mind.
 - followUp: one deeper question for later in the same conversation.
 - Works for all listed children; if ages differ, let older children go deeper while younger children can answer concretely.
@@ -176,6 +185,7 @@ ${revisionBlock}
 Return valid JSON only:
 {
   "question": "one dinner-table question ending with ?",
+  "whyThis": "one short parent-facing rationale",
   "parentMove": "one short parent facilitation move",
   "followUp": "one deeper question ending with ?",
   "skill": "${COGNITIVE_SKILLS.join(" | ")}"
@@ -183,145 +193,52 @@ Return valid JSON only:
 `;
 }
 
-const BANNED_DINNER_PHRASES = [
-  "homework",
-  "worksheet",
-  "quiz",
-  "correct answer",
-  "right answer",
-  "screen time",
-  "watch a video",
-  "look it up",
-  "search the internet",
-  "therapy",
-  "therapeutic",
-  "diagnose",
-  "treatment",
-  "brain training",
-  "boost iq",
-  "guaranteed",
-  "breaking news",
-  "headline",
-  "headlines",
-  "watch the news",
-  "read the news",
-  "politician",
-  "politicians",
-  "democrat",
-  "democrats",
-  "republican",
-  "republicans",
-  "left wing",
-  "right wing",
-  "liberal",
-  "conservative",
-  "president",
-  "senator",
-  "congress",
-  "supreme court",
-  "election",
-  "candidate",
-  "campaign",
-  "war",
-  "shooting",
-  "killed",
-  "murder",
-];
+function fallbackQuestionForWorldContext(
+  worldContextCard: SelectedWorldContextCard | null,
+): string {
+  if (!worldContextCard) {
+    return "When two people at this table have different good reasons, what is one fair way to choose what to try first?";
+  }
 
-const WEAK_DINNER_PATTERNS: Array<{ pattern: RegExp; issue: string }> = [
-  {
-    pattern: /\bwhat patterns? do you notice\b/i,
-    issue: "question uses a generic pattern-noticing frame",
-  },
-  {
-    pattern: /\bevening air\b|\bsummer night\b|\bsun\s*sets?\b|\bsunset\b|\bbreeze\b/i,
-    issue: "question centers generic nature atmosphere instead of dinner conversation",
-  },
-  {
-    pattern: /\bname one detail\b.*\b(?:hear|see|feel)\b/i,
-    issue: "parentMove is a bland sensory-noticing move",
-  },
-  {
-    pattern: /\bif you could change one thing\b.*\b(?:breeze|light|air|sky|weather)\b/i,
-    issue: "followUp asks an abstract nature tweak without human stakes",
-  },
-];
-
-const HUMAN_STAKES_TERMS = [
-  "family",
-  "friend",
-  "friends",
-  "person",
-  "people",
-  "someone",
-  "kid",
-  "kids",
-  "grown-up",
-  "grown-ups",
-  "teacher",
-  "neighbor",
-  "team",
-  "rule",
-  "fair",
-  "kind",
-  "honest",
-  "truth",
-  "trust",
-  "promise",
-  "mistake",
-  "help",
-  "listen",
-  "agree",
-  "disagree",
-  "decide",
-  "choice",
-  "choose",
-  "change your mind",
-  "evidence",
-  "believe",
-  "sure",
-  "responsible",
-  "responsibility",
-  "world",
-  "community",
-  "future",
-];
-
-const ATMOSPHERE_TERMS = [
-  "air",
-  "breeze",
-  "light",
-  "sky",
-  "sunset",
-  "sun sets",
-  "weather",
-  "cloud",
-  "clouds",
-  "wind",
-];
-
-function includesAny(text: string, terms: string[]): boolean {
-  return terms.some((term) => text.includes(term));
+  switch (worldContextCard.id) {
+    case "ai-human-judgment":
+      return "When should a person double-check a tool before trusting its answer at home or school?";
+    case "rumors-and-evidence":
+      return "If someone told a story at school but nobody saw it happen, what clue would help you check it kindly?";
+    case "fair-rules":
+      return "Think of one rule from home or a game you already know: when should it bend for someone's needs?";
+    case "limited-resources":
+      return "If two people wanted the same last bite, turn, or seat tonight, what fair rule would you try first?";
+    case "climate-tradeoffs":
+      return "When a family choice is easier tonight but less caring for the future, how should we decide what to do?";
+    case "public-spaces":
+      return "What is one small thing people can do in a shared place so it feels cared for by everyone?";
+    case "disagreement-without-contempt":
+      return "How can you tell someone is really listening during a disagreement?";
+    case "accountability-apologies":
+      return "How can you tell whether an apology is helping repair trust, not just using the right words?";
+    case "popularity-and-courage":
+      return "When is it worth doing the kind thing even if a group might laugh?";
+    case "privacy-and-sharing":
+      return "When should you ask before sharing something about another person?";
+    case "helping-near-and-far":
+      return "If two people need help, one nearby and one farther away, how would you decide whom to help first?";
+    case "experts-disagree":
+      return "If two careful experts disagree, what question would help you decide whom to trust more?";
+    default:
+      return "When two people at this table have different good reasons, what is one fair way to choose what to try first?";
+  }
 }
 
 function buildFallbackDinnerConversation(
-  context: FamilyDinnerContext,
   worldContextCard: SelectedWorldContextCard | null,
 ): GeneratedDinnerConversation {
-  const firstChild = context.children[0] ?? null;
-  const firstInterest = firstChild?.interests[0] ?? null;
-  const focus =
-    firstInterest && firstChild
-      ? `${firstChild.name}'s interest in ${firstInterest}`
-      : "something your family disagrees about";
-  const question = worldContextCard
-    ? `If two people saw this differently - ${worldContextCard.childFriendlyFrame.toLowerCase()} - what would be a fair way to decide what to try first?`
-    : `If two people at the table had different good reasons about ${focus}, how should we decide whose idea to try first?`;
-
   return {
-    question,
+    question: fallbackQuestionForWorldContext(worldContextCard),
+    whyThis:
+      "This turns a small shared choice into practice hearing reasons, weighing fairness, and thinking else together.",
     parentMove:
-      "Ask each person for one reason, then ask what evidence or experience could change their mind.",
+      "Start with a tiny example from today, then ask each person for one reason.",
     followUp:
       "What would make the decision feel fair even if someone did not get their first choice?",
     skill: "perspective-taking",
@@ -333,56 +250,6 @@ function buildFallbackDinnerConversation(
         }
       : undefined,
   };
-}
-
-function validateDinnerConversation(
-  result: GeneratedDinnerConversation,
-  worldContextCard: SelectedWorldContextCard | null,
-): string[] {
-  const issues: string[] = [];
-  const question = result.question ?? "";
-  const parentMove = result.parentMove ?? "";
-  const followUp = result.followUp ?? "";
-  const skill = result.skill ?? "";
-  const blob = `${question} ${parentMove} ${followUp} ${skill}`.toLowerCase();
-
-  if (!question.trim()) issues.push("question is empty");
-  if (!parentMove.trim()) issues.push("parentMove is empty");
-  if (!followUp.trim()) issues.push("followUp is empty");
-  if (!skill.trim()) issues.push("skill is empty");
-
-  if (question.length > 220) issues.push("question too long for SMS");
-  if (parentMove.length > 180) issues.push("parentMove too long for SMS");
-  if (followUp.length > 180) issues.push("followUp too long for SMS");
-  if (!question.trim().endsWith("?")) issues.push("question must end with ?");
-  if (!followUp.trim().endsWith("?")) issues.push("followUp must end with ?");
-
-  const banned = BANNED_DINNER_PHRASES.find((phrase) => blob.includes(phrase));
-  if (banned) issues.push(`contains banned phrase: ${banned}`);
-
-  for (const weakPattern of WEAK_DINNER_PATTERNS) {
-    if (weakPattern.pattern.test(`${question} ${parentMove} ${followUp}`)) {
-      issues.push(weakPattern.issue);
-    }
-  }
-
-  const questionBlob = question.toLowerCase();
-  const conversationBlob = `${question} ${followUp}`.toLowerCase();
-  if (
-    includesAny(questionBlob, ATMOSPHERE_TERMS) &&
-    !includesAny(conversationBlob, HUMAN_STAKES_TERMS)
-  ) {
-    issues.push("question uses atmosphere or weather without human stakes");
-  }
-
-  if (
-    worldContextCard &&
-    !includesAny(conversationBlob, [...worldContextCard.focusTerms])
-  ) {
-    issues.push("question does not reflect the selected world-context card");
-  }
-
-  return issues;
 }
 
 async function requestDinnerConversation(
@@ -432,14 +299,14 @@ export async function generateDinnerConversation(
     options.worldContextLevel,
   );
   let dinner = await requestDinnerConversation(context, worldContextCard);
-  let issues = validateDinnerConversation(dinner, worldContextCard);
+  let issues = validateDinnerConversation(dinner, worldContextCard, context);
 
   if (issues.length > 0) {
     dinner = await requestDinnerConversation(context, worldContextCard, issues);
-    issues = validateDinnerConversation(dinner, worldContextCard);
+    issues = validateDinnerConversation(dinner, worldContextCard, context);
     if (issues.length > 0) {
       console.warn("Dinner conversation quality issues after retry:", issues);
-      return buildFallbackDinnerConversation(context, worldContextCard);
+      return buildFallbackDinnerConversation(worldContextCard);
     }
   }
 

@@ -65,20 +65,49 @@ const SAMPLE_CONTEXT: FamilyDinnerContext = {
   ],
   recentDinnerConversations: [
     {
-      question: "If someone in our family changed their mind, how would we know they were being thoughtful and not just giving in?",
-      parent_move: "Ask for one example from today, then invite another person to add a different view.",
-      follow_up: "What makes changing your mind brave instead of embarrassing?",
-      skill: "intellectual-humility",
-      local_date_key: "2026-06-12",
-      sent_at: "2026-06-12T18:30:00Z",
+      question:
+        "If you designed a game where players had to choose between sharing a resource or keeping it all to themselves, what rules would make sharing feel fair to everyone?",
+      parent_move:
+        "Ask what makes you say that and invite another family member to add their ideas.",
+      follow_up:
+        "What could happen in the game if someone changed the sharing rules halfway through-how would players react?",
+      skill: "values-reasoning",
+      local_date_key: "2026-07-05",
+      sent_at: "2026-07-05T18:30:00Z",
+    },
+    {
+      question:
+        "If you could design a game about how families make decisions together, what tricky choices would you include and why?",
+      parent_move:
+        "Ask what makes you say that and invite another family member to share a different idea.",
+      follow_up:
+        "How might your game show that sometimes people change their minds or see things differently?",
+      skill: "decision-making",
+      local_date_key: "2026-07-04",
+      sent_at: "2026-07-04T18:30:00Z",
     },
   ],
   familyLearningEvents: [
     {
       kind: "family_preference",
-      summary: "Parent dislikes formulaic nature-observation prompts and prefers richer dinner conversation.",
-      evidence: "feedback on weak dinner starter",
+      summary:
+        "Parent dislikes unanswerable abstract dinner questions about designing games, players, resources, and family decision systems.",
+      evidence: "feedback on two weak dinner starters",
+      confidence: 0.95,
+    },
+    {
+      kind: "family_preference",
+      summary:
+        "Dinner questions should be concrete enough for the youngest child to answer immediately from lived experience.",
+      evidence: "parent said current dinner questions are unanswerable",
       confidence: 0.9,
+    },
+    {
+      kind: "family_preference",
+      summary:
+        "Parent wants families to look forward to each dinner question, not ignore texts that feel boring, childish, generic, similar, unactionable, or unanswerable.",
+      evidence: "parent said families should feel they cannot wait to receive each dinner question",
+      confidence: 0.95,
     },
   ],
   temporal: {
