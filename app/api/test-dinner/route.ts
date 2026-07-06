@@ -102,6 +102,13 @@ const SAMPLE_CONTEXT: FamilyDinnerContext = {
       evidence: "parent said current dinner questions are unanswerable",
       confidence: 0.9,
     },
+    {
+      kind: "family_preference",
+      summary:
+        "Parent wants families to look forward to each dinner question, not ignore texts that feel boring, childish, generic, similar, unactionable, or unanswerable.",
+      evidence: "parent said families should feel they cannot wait to receive each dinner question",
+      confidence: 0.95,
+    },
   ],
   temporal: {
     season: "summer",

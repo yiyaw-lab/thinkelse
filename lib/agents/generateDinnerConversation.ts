@@ -151,13 +151,15 @@ ${formatWorldContextGuidance(worldContextCard)}
 
 Dinner conversation bar:
 - Make this feel worth asking at dinner. Prefer a small dilemma, choice, tradeoff, perspective clash, family value, changed mind, or "how do we know?" question over passive noticing.
+- Anticipation bar: this should sound like a question someone at the table might still be talking about five minutes later. It needs a spark: a real tension, surprising angle, personal story, or safe disagreement.
 - The first question should have human stakes: fairness, honesty, trust, courage, kindness, disagreement, responsibility, promises, belonging, evidence, uncertainty, or how people should decide.
 - Make it answerable in the first 10 seconds by the youngest listed child. Anchor abstract ideas in lived dinner-scale examples: a turn, last bite, seat, family rule, game they already know, friend situation, school moment, or something from today.
 - Do not ask the child to design a whole game, system, society, or decision-making model. Avoid "players", "resource", "keeping it all to themselves", "families make decisions together", and other adult/academic abstractions unless translated into a concrete family example.
 - Use the season/time/place only as texture. Do not make the core question about air, light, breeze, clouds, sunset, or generic sensory observation.
 - If you use a child's interest, connect it to a real-life judgment or perspective, not trivia about the interest.
-- Parent move should help the parent run a better conversation: start with a tiny example, pause, invite a reason, ask for evidence, ask for the opposite view, ask another child to build on it, or ask what would change their mind.
+- Parent move should help the parent run a better conversation: start with a tiny example, pause, invite a reason, ask for evidence, ask for the opposite view, ask another child to build on it, or ask what would change their mind. Do not repeat the formula "Ask what makes you say that and invite another family member..."
 - Avoid bland frames like "What patterns do you notice..." or "Name one thing you hear, see, or feel..." unless paired with a meaningful human decision.
+- Avoid adult-seminar energy and generic facilitation. No "share your ideas", "add their ideas", "tricky choices", "players", or "what could happen in the game" phrasing.
 - If a world-context lens is present, translate it into a durable family-scale question. Do not mention the news, headlines, parties, politicians, named public figures, violent events, or adult-coded policy debates.
 - Strong examples to learn from, not copy:
   - If two people remember the same moment differently, how could we figure out what probably happened without making either person feel small?

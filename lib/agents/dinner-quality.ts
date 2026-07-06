@@ -90,6 +90,26 @@ const WEAK_DINNER_PATTERNS: Array<{ pattern: RegExp; issue: string }> = [
     pattern: /\bwhat rules would make\b.*\bfair to everyone\b/i,
     issue: "question asks for abstract rule design instead of a concrete fair choice",
   },
+  {
+    pattern: /\bask what makes you say that and invite another family member\b/i,
+    issue: "parentMove is formulaic instead of tailored to this question",
+  },
+  {
+    pattern: /\binvite another family member to (?:add their ideas|share a different idea)\b/i,
+    issue: "parentMove uses generic facilitation copy",
+  },
+  {
+    pattern: /\b(?:share|add) (?:your|their) ideas\b/i,
+    issue: "conversation copy feels generic; ask for a reason, example, or opposite view instead",
+  },
+  {
+    pattern: /\bwhat could happen\b.*\bhow would players react\b/i,
+    issue: "followUp stays inside an abstract game scenario",
+  },
+  {
+    pattern: /\bhow might your game show\b/i,
+    issue: "followUp is too meta instead of extending a real table conversation",
+  },
 ];
 
 const HUMAN_STAKES_TERMS = [
@@ -175,6 +195,36 @@ const CONCRETE_DINNER_ANCHORS = [
   "something that happened",
 ];
 
+const TABLE_SPARK_TERMS = [
+  "today",
+  "tonight",
+  "ever",
+  "last bite",
+  "turn",
+  "seat",
+  "friend",
+  "school",
+  "home",
+  "truth",
+  "fair",
+  "kind",
+  "promise",
+  "mistake",
+  "trust",
+  "brave",
+  "lose",
+  "win",
+  "first choice",
+  "different good reasons",
+  "change your mind",
+  "really listening",
+  "what would change",
+  "what would make",
+];
+
+const GENERIC_FACILITATION_ENERGY =
+  /\b(?:ask what makes you say that|invite another family member|share (?:your|their) ideas|add (?:your|their) ideas|different idea)\b/i;
+
 const REPEATED_DINNER_THEME_GROUPS: Array<{ label: string; pattern: RegExp }> = [
   { label: "game design", pattern: /\b(?:design|designed|game|players?)\b/i },
   { label: "resource sharing", pattern: /\b(?:resource|resources|share|sharing|keeping it all)\b/i },
@@ -249,6 +299,14 @@ export function validateDinnerConversation(
     !includesAny(conversationBlob, CONCRETE_DINNER_ANCHORS)
   ) {
     issues.push("question uses abstract scenario language without a concrete answer anchor");
+  }
+
+  if (GENERIC_FACILITATION_ENERGY.test(blob)) {
+    issues.push("dinner prompt feels formulaic instead of worth anticipating");
+  }
+
+  if (!includesAny(conversationBlob, TABLE_SPARK_TERMS)) {
+    issues.push("dinner question needs a stronger table hook or personal stake");
   }
 
   if (context) {
