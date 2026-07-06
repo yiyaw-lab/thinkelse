@@ -42,7 +42,7 @@ function settingHintsFor(
   const hints: string[] = [];
 
   if (timeOfDay === "early morning" || timeOfDay === "morning") {
-    hints.push("breakfast table", "walk to school", "window light", "front step");
+    hints.push("breakfast table", "backpack", "shared object", "walk to school");
   } else if (timeOfDay === "afternoon") {
     hints.push("after school", "backyard", "sidewalk", "kitchen counter");
   } else {
@@ -74,5 +74,5 @@ export function getTemporalContext(
 }
 
 export function formatTemporalContext(context: TemporalContext): string {
-  return `Season: ${context.season}. Delivery time: ${context.timeOfDay}. Favor settings like: ${context.settingHints.slice(0, 5).join(", ")}.`;
+  return `Season: ${context.season}. Delivery time: ${context.timeOfDay}. Time-compatible texture: ${context.settingHints.slice(0, 5).join(", ")}.`;
 }
