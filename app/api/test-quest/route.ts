@@ -52,6 +52,13 @@ const SAMPLE_CONTEXT: FamilyQuestContext = {
       evidence: "parent asked for less formulaic morning quests",
       confidence: 0.9,
     },
+    {
+      kind: "family_preference",
+      summary:
+        "Parent wants quests families look forward to each day, not boring, childish, generic, similar, unactionable, or unanswerable texts.",
+      evidence: "parent said families should feel they cannot wait to receive each quest",
+      confidence: 0.95,
+    },
   ],
   temporal: {
     season: "summer",

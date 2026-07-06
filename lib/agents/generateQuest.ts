@@ -78,6 +78,7 @@ ${launchGuidance}
 
 Quality bar:
 - audience: parent reads the SMS and shares with ${context.childName} — never write as if the child is texting Elsy
+- anticipation: the parent should think "I want to try this today." Give the quest a small hook, tension, or promised payoff: a surprising answer, a clue to test, a fair rule to invent, a tiny redesign, a changed mind, or a choice with tradeoffs.
 - prompt: one vivid ask-aloud curiosity question ${context.childName} can hold all day (you may use their name); concrete enough to picture; no single right answer
 - mission: 2–10 min real-world action parent + child can do without prep; one clear action beats a list; include a tiny parent facilitation move when natural (notice together, name a detail, wait, compare, or try one change)
 - followUp: one Socratic question for later — invite evidence, perspective, creative alternatives, or "did your idea change?"
@@ -90,6 +91,7 @@ Quality bar:
 - concrete > abstract; kitchen, sidewalk, backpack, table, shared object, game, or family routine > generic "nature"
 - For quest #2 and beyond, do not default to front-step/window-light/shadow/shape/color/pattern noticing. If recent quests used those surfaces, choose a different kind of thinking today: fairness, trust, evidence, redesign, perspective, tradeoff, or a tiny test.
 - A morning quest can still be concrete without being bland: make the action about a choice, claim, rule, design, tradeoff, or perspective when recent quests were mostly sensory observation.
+- Avoid ignorable SMS energy: no "look around and notice something", "fun little activity", generic scavenger hunt, vague exploration, or preschool-craft tone unless the family profile clearly calls for it.
 - dullness check: reject anything that could appear in a worksheet, generic activity book, or chatbot demo
 - safety/copy: no medical, therapeutic, diagnostic, or guaranteed-development language
 ${revisionBlock}
@@ -141,7 +143,7 @@ function buildFallbackQuest(context: FamilyQuestContext): GeneratedQuest {
       title: "Trust the Clue",
       prompt: `${childName}, when someone makes a guess, what kind of clue would help you decide whether to trust it?`,
       mission:
-        "Make one tiny prediction about something nearby and check one clue to see whether your idea gets stronger or weaker.",
+        "Make one tiny prediction about a door, cup, backpack, or toy and check one clue to see if your idea gets stronger.",
       followUp: "What else could be true if your first idea is wrong?",
       skill: "evidence-seeking",
     },

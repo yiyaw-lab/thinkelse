@@ -67,8 +67,24 @@ const WEAK_FOLLOW_UP_PATTERNS = [
 
 const WEAK_QUEST_PATTERNS = [
   {
+    pattern: /\bwhat do you notice\b/i,
+    note: "prompt uses a generic noticing frame",
+  },
+  {
     pattern: /\bwhat (?:kinds of )?(?:shapes?|colors?|patterns?) do you notice\b/i,
     note: "prompt uses a generic shape/color/pattern noticing frame",
+  },
+  {
+    pattern: /\b(?:look|walk|go) around\b|\baround (?:you|your home|the house)\b/i,
+    note: "quest uses a generic setting instead of a vivid anchor",
+  },
+  {
+    pattern: /\b(?:something|anything) (?:interesting|new|different|nearby)\b/i,
+    note: "quest asks for a vague object instead of a specific hook",
+  },
+  {
+    pattern: /\b(?:fun little|silly|super fun|cool activity)\b/i,
+    note: "quest tone feels childish or ignorable",
   },
   {
     pattern: /\bfront step\b/i,
@@ -118,6 +134,30 @@ const RICH_THINKING_TERMS = [
   "change your mind",
   "what else could be true",
 ];
+
+const ANTICIPATION_HOOK_TERMS = [
+  ...RICH_THINKING_TERMS,
+  "surprise",
+  "surprising",
+  "mystery",
+  "detective",
+  "clue",
+  "wonder",
+  "why",
+  "what if",
+  "better",
+  "harder",
+  "easier",
+  "helps",
+  "trade",
+  "choose",
+  "try first",
+  "stronger",
+  "weaker",
+];
+
+const GENERIC_QUEST_ENERGY =
+  /\b(?:look around|things around|something nearby|something interesting|anything interesting|explore|fun little|cool activity|what do you notice)\b/i;
 
 function containsBannedPhrase(text: string): string | null {
   const lower = text.toLowerCase();
@@ -239,6 +279,15 @@ export function validateQuest(
     !RICH_THINKING_TERMS.some((term) => blob.includes(term))
   ) {
     issues.push("quest relies on passive sensory noticing without a richer thinking move");
+  }
+
+  if (
+    context &&
+    context.questNumber > 1 &&
+    GENERIC_QUEST_ENERGY.test(blob) &&
+    !ANTICIPATION_HOOK_TERMS.some((term) => blob.includes(term))
+  ) {
+    issues.push("quest feels ignorable: add a concrete hook, tension, or payoff");
   }
 
   if (context) {
