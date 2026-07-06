@@ -40,6 +40,9 @@ jobs:
       - name: Check parent companion
         run: npm run check:parent-companion
 
+      - name: Check scheduler windows
+        run: npm run check:scheduler-windows
+
       - name: Typecheck
         run: npx tsc --noEmit
 

@@ -19,8 +19,8 @@ import {
   DEFAULT_TIMEZONE,
   formatLocalDateKey,
   getLocalTimeParts,
+  isPreferredDeliveryWindow,
   parsePreferredTime,
-  type PreferredTimeParts,
 } from "@/lib/timezone";
 
 type DinnerCronResult = {
@@ -31,18 +31,6 @@ type DinnerCronResult = {
   localDate?: string;
   localTime?: string;
 };
-
-function isDeliveryWindow(
-  preferredTime: PreferredTimeParts,
-  localTime: PreferredTimeParts,
-): boolean {
-  if (preferredTime.hour !== localTime.hour) {
-    return false;
-  }
-
-  const minuteDelta = localTime.minute - preferredTime.minute;
-  return minuteDelta >= 0 && minuteDelta < 30;
-}
 
 function isAuthorized(request: Request): boolean {
   const authHeader = request.headers.get("authorization");
@@ -106,7 +94,7 @@ export async function GET(request: Request) {
       continue;
     }
 
-    if (!isDeliveryWindow(dinnerTime, localTime)) {
+    if (!isPreferredDeliveryWindow(dinnerTime, localTime)) {
       if (dryRun) {
         results.push({
           phone: family.phone,
