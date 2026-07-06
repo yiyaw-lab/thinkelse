@@ -5,6 +5,9 @@ Elsy messages should create small parent-mediated conversations, not lessons. Th
 The highest-level product principles live in `docs/THINKELSE_CONSTITUTION.md`.
 Use that constitution to judge whether a prompt helps a family practice truth,
 judgment, care, agency, and shared thinking, not just whether the SMS is valid.
+The canonical send-quality rubric lives in `docs/ELSY_QUALITY_RUBRIC.md` and is
+the review standard for deciding whether a quest, dinner question, or reply is
+worth sending.
 
 ## Research Themes
 

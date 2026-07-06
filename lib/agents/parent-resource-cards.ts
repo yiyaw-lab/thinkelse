@@ -1,3 +1,5 @@
+import { formatRubricGuidance } from "./quality-rubric";
+
 export type ParentResourceAgeBand = "5-7" | "8-10" | "11-12" | "all";
 
 export type ParentResourceCard = {
@@ -131,6 +133,45 @@ export const PARENT_RESOURCE_CARDS: readonly ParentResourceCard[] = [
   },
 ];
 
+export const PARENT_RESOURCE_RUBRIC_GUIDANCE = formatRubricGuidance("resource");
+
+const RESOURCE_CARD_BANNED_COPY = [
+  /\bguarantee(?:d|s)?\b/i,
+  /\bdiagnos(?:e|is|tic)\b/i,
+  /\btherap(?:y|ist|eutic)\b/i,
+  /\bmedical\b/i,
+  /\bmental health\b/i,
+  /\bboost iq\b/i,
+  /\bbrain training\b/i,
+];
+
+export function validateParentResourceCard(card: ParentResourceCard): string[] {
+  const issues: string[] = [];
+  const copy = `${card.why} ${card.tryThis} ${card.safetyNote}`;
+
+  if (!card.why.trim()) issues.push(`${card.id}: why is empty`);
+  if (!card.tryThis.trim()) issues.push(`${card.id}: tryThis is empty`);
+  if (!card.safetyNote.trim()) issues.push(`${card.id}: safetyNote is empty`);
+  if (!card.sourceName.trim()) issues.push(`${card.id}: sourceName is empty`);
+  if (!card.url.startsWith("https://")) {
+    issues.push(`${card.id}: resource URL must be https`);
+  }
+  if (!/\b(?:ask|pause|separate|use|keep|avoid|do not)\b/i.test(card.tryThis)) {
+    issues.push(`${card.id}: tryThis needs a concrete parent move`);
+  }
+  if (!/\b(?:claim|support|not|avoid|keep|age-appropriate|parent context|conversation)\b/i.test(card.safetyNote)) {
+    issues.push(`${card.id}: safetyNote needs a clear boundary`);
+  }
+
+  for (const pattern of RESOURCE_CARD_BANNED_COPY) {
+    if (pattern.test(copy)) {
+      issues.push(`${card.id}: contains banned resource-card claim`);
+    }
+  }
+
+  return issues;
+}
+
 function ageBandFor(age: number | null | undefined): ParentResourceAgeBand | null {
   if (age === null || age === undefined) return null;
   if (age <= 7) return "5-7";
@@ -189,7 +230,11 @@ export function selectParentResourceCard(
 ): ParentResourceCard {
   return [...PARENT_RESOURCE_CARDS]
     .map((card) => ({ card, score: scoreResourceCard(card, context) }))
-    .filter((entry) => Number.isFinite(entry.score))
+    .filter(
+      (entry) =>
+        Number.isFinite(entry.score) &&
+        validateParentResourceCard(entry.card).length === 0,
+    )
     .sort((a, b) => {
       if (b.score !== a.score) return b.score - a.score;
       return a.card.id.localeCompare(b.card.id);

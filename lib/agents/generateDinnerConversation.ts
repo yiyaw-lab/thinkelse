@@ -10,6 +10,7 @@ import {
 import { formatTechniqueGuidance, selectQuestTechniques } from "./research-techniques";
 import { formatTemporalContext } from "./temporal-context";
 import { validateDinnerConversation } from "./dinner-quality";
+import { formatRubricGuidance } from "./quality-rubric";
 import {
   formatWorldContextGuidance,
   selectWorldContextCard,
@@ -149,6 +150,8 @@ Evidence-informed method lens - invisible design layer. Choose ONE best-fit lens
 ${selectDinnerTechniqueGuidance(context)}
 
 ${formatWorldContextGuidance(worldContextCard)}
+
+${formatRubricGuidance("dinner")}
 
 Dinner conversation bar:
 - Make this feel worth asking at dinner. Prefer a small dilemma, choice, tradeoff, perspective clash, family value, changed mind, or "how do we know?" question over passive noticing.

@@ -11,7 +11,8 @@ Help parents raise thoughtful children in the AI age, one tiny curiosity quest a
 
 The product doctrine lives in `docs/THINKELSE_CONSTITUTION.md`: what it means to
 think else, why this matters in an automated world, and the capacities Elsy is
-trying to help families practice.
+trying to help families practice. The send-quality bar lives in
+`docs/ELSY_QUALITY_RUBRIC.md`.
 
 ## The Else loop
 
@@ -119,6 +120,7 @@ lib/
 docs/
   ARCHITECTURE.md     — Architecture decisions
   THINKELSE_CONSTITUTION.md — Product principles and long-horizon learning philosophy
+  ELSY_QUALITY_RUBRIC.md — Canonical review standard for quests, dinner, and replies
   EVIDENCE_INFORMED_TECHNIQUES.md — Research-backed quest methodology catalog
 ```
 

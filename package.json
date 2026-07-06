@@ -7,7 +7,8 @@
     "generate:elsy-model": "blender --background --python scripts/blender/generate_elsy_moon_jelly.py",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "check:quality-rubric": "node scripts/check-quality-rubric.mjs"
   },
   "dependencies": {
     "@react-spring/three": "^10.1.1",
