@@ -5,6 +5,7 @@ export type FamilyLearningContextEntry = {
   summary: string;
   evidence?: string | null;
   confidence?: number | null;
+  child_id?: string | null;
   created_at?: string;
 };
 

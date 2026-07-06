@@ -25,6 +25,9 @@ jobs:
       - name: Check Elsy quality fixtures
         run: npm run check:quality-fixtures
 
+      - name: Check family memory profile
+        run: npm run check:family-memory
+
       - name: Typecheck
         run: npx tsc --noEmit
 
