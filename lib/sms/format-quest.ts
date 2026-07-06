@@ -4,10 +4,13 @@ import type { InterpretedResponse } from "@/lib/agents/interpretResponse";
 
 export function formatQuestMessage(quest: GeneratedQuest, childName?: string | null): string {
   const childLine = childName ? `For ${childName}\n` : "";
+  const whyLine = quest.whyThis?.trim()
+    ? `Why this:\n${quest.whyThis.trim()}\n\n`
+    : "";
 
   return `🌱 ${quest.title}
 
-${childLine}Ask:
+${childLine}${whyLine}Ask:
 ${quest.prompt}
 
 Try:
@@ -16,7 +19,7 @@ ${quest.mission}
 Later:
 ${quest.followUp}
 
-Reply with what they noticed.`;
+Reply with what they noticed, or WHY for parent context + source.`;
 }
 
 export function formatInterpretationMessage(result: InterpretedResponse): string {
