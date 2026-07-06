@@ -21,6 +21,7 @@ import type { FamilyQuestContext } from "./types";
 
 export type GeneratedDinnerConversation = {
   question: string;
+  whyThis: string;
   parentMove: string;
   followUp: string;
   skill: string;
@@ -172,6 +173,7 @@ Dinner conversation bar:
 Quality bar:
 - This is a dinner conversation, not a quest. No mission, task list, reporting ask, homework, worksheet, trivia, screen use, or "look it up."
 - question: one table-ready question with no single right answer; it should invite evidence, uncertainty, perspective, tradeoffs, imagination, values, or a changed mind.
+- whyThis: one parent-facing sentence, 12–24 words, explaining why this was selected and how it helps the family think else together. No citations, grand claims, or research jargon.
 - parentMove: one short facilitation move the parent can use at the table, such as wait, ask what makes you say that, invite another child to add on, ask for the opposite view, or ask what evidence would change their mind.
 - followUp: one deeper question for later in the same conversation.
 - Works for all listed children; if ages differ, let older children go deeper while younger children can answer concretely.
@@ -183,6 +185,7 @@ ${revisionBlock}
 Return valid JSON only:
 {
   "question": "one dinner-table question ending with ?",
+  "whyThis": "one short parent-facing rationale",
   "parentMove": "one short parent facilitation move",
   "followUp": "one deeper question ending with ?",
   "skill": "${COGNITIVE_SKILLS.join(" | ")}"
@@ -232,6 +235,8 @@ function buildFallbackDinnerConversation(
 ): GeneratedDinnerConversation {
   return {
     question: fallbackQuestionForWorldContext(worldContextCard),
+    whyThis:
+      "This turns a small shared choice into practice hearing reasons, weighing fairness, and thinking else together.",
     parentMove:
       "Start with a tiny example from today, then ask each person for one reason.",
     followUp:

@@ -3,6 +3,7 @@ import type { SelectedWorldContextCard } from "./world-context-cards";
 
 type DinnerQualityResult = {
   question?: string | null;
+  whyThis?: string | null;
   parentMove?: string | null;
   followUp?: string | null;
   skill?: string | null;
@@ -235,6 +236,13 @@ function includesAny(text: string, terms: string[]): boolean {
   return terms.some((term) => text.includes(term));
 }
 
+function wordCount(text: string): number {
+  return text
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean).length;
+}
+
 function repeatedDinnerThemes(
   result: DinnerQualityResult,
   context: FamilyDinnerContext,
@@ -260,20 +268,35 @@ export function validateDinnerConversation(
 ): string[] {
   const issues: string[] = [];
   const question = result.question ?? "";
+  const whyThis = result.whyThis ?? "";
   const parentMove = result.parentMove ?? "";
   const followUp = result.followUp ?? "";
   const skill = result.skill ?? "";
-  const blob = `${question} ${parentMove} ${followUp} ${skill}`.toLowerCase();
+  const blob = `${question} ${whyThis} ${parentMove} ${followUp} ${skill}`.toLowerCase();
 
   if (!question.trim()) issues.push("question is empty");
+  if (!whyThis.trim()) issues.push("whyThis is empty");
   if (!parentMove.trim()) issues.push("parentMove is empty");
   if (!followUp.trim()) issues.push("followUp is empty");
   if (!skill.trim()) issues.push("skill is empty");
 
   if (question.length > 220) issues.push("question too long for SMS");
+  if (whyThis.length > 180) issues.push("whyThis too long for SMS");
   if (parentMove.length > 180) issues.push("parentMove too long for SMS");
   if (followUp.length > 180) issues.push("followUp too long for SMS");
   if (!question.trim().endsWith("?")) issues.push("question must end with ?");
+  if (whyThis && wordCount(whyThis) > 28) {
+    issues.push("whyThis should be one short parent-facing sentence");
+  }
+  if (/\b(?:study|studies|research proves|neuroscience|brain development|guaranteed)\b/i.test(whyThis)) {
+    issues.push("whyThis should avoid research jargon or overclaims");
+  }
+  if (
+    whyThis &&
+    !/\b(?:together|family|table|everyone|you)\b/i.test(whyThis)
+  ) {
+    issues.push("whyThis should show how this brings the family into the conversation");
+  }
   if (!followUp.trim().endsWith("?")) issues.push("followUp must end with ?");
 
   const banned = BANNED_DINNER_PHRASES.find((phrase) => blob.includes(phrase));

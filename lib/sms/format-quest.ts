@@ -28,8 +28,12 @@ ${result.followUp}`;
 export function formatDinnerConversationMessage(
   dinner: GeneratedDinnerConversation,
 ): string {
+  const whyBlock = dinner.whyThis?.trim()
+    ? `\n\nWhy this:\n${dinner.whyThis.trim()}`
+    : "";
+
   return `Dinner question:
-${dinner.question}
+${dinner.question}${whyBlock}
 
 Parent move:
 ${dinner.parentMove}
@@ -37,7 +41,7 @@ ${dinner.parentMove}
 If it opens up:
 ${dinner.followUp}
 
-No need to reply. Reply DINNER OFF to pause.`;
+No need to reply. Reply WHY for parent context + source, DINNER OFF to pause.`;
 }
 
 export function formatDinnerConversationNudgeMessage(): string {
