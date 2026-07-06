@@ -14,6 +14,87 @@ Thinkelse exists to help families raise children who can stay curious, honest,
 humane, and self-directed in a world where automated answers are cheap and
 human judgment is precious.
 
+## Research Foundation
+
+This constitution is a product doctrine, not an academic paper. Its claims
+should still be disciplined by research. The current foundation draws from five
+evidence streams.
+
+### 1. Learning science and transferable competence
+
+The National Academies' work on deeper learning frames durable competence as
+more than content recall. It highlights cognitive, intrapersonal, and
+interpersonal domains and argues that transferable knowledge and skills require
+clear goals, sustained practice, questioning, feedback, examples, cases, and
+connections to learners' lives and interests.
+
+Thinkelse implication: daily SMS should not be trivia. It should create tiny,
+repeated practices where children explain, compare, test, revise, and transfer
+ideas into ordinary life.
+
+### 2. Future-ready agency and responsibility
+
+OECD's Learning Compass 2030 emphasizes agency, co-agency, creating new value,
+reconciling tensions and dilemmas, and taking responsibility. UNESCO's Futures
+of Education argues for rethinking learning in relation to one another, the
+planet, and technology.
+
+Thinkelse implication: "22nd-century skills" should not mean futuristic jargon.
+They should mean portable human capacities: agency, responsibility, moral
+imagination, collaborative judgment, and comfort with ambiguity.
+
+### 3. AI-era human judgment
+
+Stanford HAI's AI Index tracks rapid AI progress and societal impact. The World
+Economic Forum's 2025 jobs work points to skill churn and continued importance
+of analytical thinking, creative thinking, resilience, leadership, and
+collaboration. OECD's AI and the Future of Skills work notes that AI has already
+outperformed many humans on some basic information-processing tasks, while NIST
+emphasizes that AI trustworthiness still requires human judgment and oversight.
+UNESCO's AI education guidance and AI competency framework call for a
+human-centered orientation, responsible use, ethics, and critical judgment.
+
+Thinkelse implication: children should learn to use tools without surrendering
+their judgment. Elsy should train discernment, evidence habits, attention,
+source sense, and quality judgment before children are surrounded by automated
+answers.
+
+### 4. Epistemic cognition and critical thinking
+
+Critical thinking research treats good thinking as purposeful,
+self-regulatory judgment: interpretation, analysis, evaluation, inference, and
+explanation. Research on post-truth education highlights different failure
+modes: not knowing how to know, fallible ways of knowing, not caring enough
+about truth, and disagreement about how to know. Civic online reasoning and
+lateral reading research shows that evaluating claims requires source sense,
+not just reading more of the same page.
+
+Thinkelse implication: epistemic honesty is not a vibe. It is a set of habits:
+separating "I know" from "I think," asking what evidence would matter, checking
+who would know, and being willing to update.
+
+### 5. Relationships as the medium of development
+
+Harvard's serve-and-return work emphasizes responsive back-and-forth between
+children and caring adults. CASEL and broader SEL research emphasize
+self-awareness, self-management, social awareness, relationship skills, and
+responsible decision-making. Search Institute's developmental relationships
+framework identifies relationships as a core context for young people to grow,
+learn, and contribute.
+
+Thinkelse implication: the unit of change is not the child alone. It is the
+parent-child interaction, the family table, the back-and-forth question, and
+the shared moment where thinking becomes relational.
+
+### Evidence posture
+
+The evidence is strongest for broad learning-science principles, critical
+thinking instruction, social-emotional development, and parent-child
+interaction. Evidence is more directional for long-horizon labor-market and AI
+foresight. Therefore, Elsy should be evidence-informed, not
+evidence-inflated: use research to shape methods, but avoid claims that one
+text message guarantees outcomes.
+
 ## Why Think Else
 
 Children are inheriting a world where machines can generate fluent text,
@@ -339,6 +420,64 @@ beautiful, specific invitations.
 
 When parents ask why, Elsy can explain the method and offer a source. The daily
 message itself should stay alive, brief, and human.
+
+## Source Registry
+
+This registry is not exhaustive. It names the current anchors that should be
+revisited as the methodology evolves.
+
+### Learning science and transferable skills
+
+- National Academies, [Education for Life and Work: Developing Transferable
+  Knowledge and Skills in the 21st Century](https://nap.nationalacademies.org/catalog/13398/education-for-life-and-work-developing-transferable-knowledge-and-skills-in-the-21st-century)
+- National Academies, [How People Learn II: Learners, Contexts, and
+  Cultures](https://www.nationalacademies.org/read/24783)
+- National Academies, [report summary on transferable knowledge and
+  21st-century competencies](https://www.nationalacademies.org/news/transferable-knowledge-and-skills-key-to-success-in-education-and-work-report-calls-for-efforts-to-incorporate-deeper-learning-into-curriculum)
+
+### Future skills and education futures
+
+- OECD, [Learning Compass 2030](https://www.oecd.org/en/data/tools/oecd-learning-compass-2030.html)
+- OECD, [Transformative Competencies for
+  2030](https://www.oecd.org/content/dam/oecd/en/about/projects/edu/education-2040/concept-notes/Transformative_Competencies_for_2030_concept_note.pdf)
+- UNESCO, [Futures of Education](https://www.unesco.org/en/futures-education)
+
+### AI-era judgment and human advantage
+
+- Stanford HAI, [AI Index Report 2025](https://hai.stanford.edu/ai-index/2025-ai-index-report)
+- World Economic Forum, [Future of Jobs Report 2025 press
+  release](https://www.weforum.org/press/2025/01/future-of-jobs-report-2025-78-million-new-job-opportunities-by-2030-but-urgent-upskilling-needed-to-prepare-workforces/)
+- World Economic Forum, [New Economy Skills: Unlocking the Human Advantage
+  2025](https://reports.weforum.org/docs/WEF_New_Economy_Skills_Unlocking_the_Human_Advantage_2025.pdf)
+- OECD, [AI and the Future of Skills, Volume
+  1](https://www.oecd.org/en/publications/ai-and-the-future-of-skills-volume-1_5ee71f34-en/full-report.html)
+- NIST, [AI Risk Management Framework
+  1.0](https://nvlpubs.nist.gov/nistpubs/ai/nist.ai.100-1.pdf)
+- UNESCO, [Guidance for generative AI in education and
+  research](https://www.unesco.org/en/articles/guidance-generative-ai-education-and-research)
+- UNESCO, [AI competency framework for
+  students](https://www.unesco.org/en/articles/ai-competency-framework-students)
+- Microsoft Research, [The Impact of Generative AI on Critical
+  Thinking](https://www.microsoft.com/en-us/research/publication/the-impact-of-generative-ai-on-critical-thinking-self-reported-reductions-in-cognitive-effort-and-confidence-effects-from-a-survey-of-knowledge-workers/)
+
+### Epistemic honesty, critical thinking, and source sense
+
+- Abrami et al., [Strategies for Teaching Students to Think Critically: A
+  Meta-Analysis](https://journals.sagepub.com/doi/abs/10.3102/0034654314551063)
+- Barzilai and Chinn, [A review of educational responses to the post-truth
+  condition](https://scholarship.libraries.rutgers.edu/esploro/outputs/journalArticle/A-review-of-educational-responses-to/991031758535304646)
+- Wineburg and McGrew, [Lateral Reading: Reading Less and Learning More When
+  Evaluating Digital Information](https://papers.ssrn.com/sol3/papers.cfm?abstract_id=3048994)
+
+### Family relationships, social-emotional growth, and service-minded agency
+
+- Harvard Center on the Developing Child, [Serve and
+  Return](https://developingchild.harvard.edu/key-concept/serve-and-return/)
+- CASEL, [What Is the CASEL Framework?](https://casel.org/fundamentals-of-sel/what-is-the-casel-framework/)
+- Learning Policy Institute, [Evidence for Social and Emotional Learning in
+  Schools](https://learningpolicyinstitute.org/product/evidence-social-emotional-learning-schools-brief)
+- Search Institute, [Developmental Relationships
+  Framework](https://searchinstitute.org/resources-hub/developmental-relationships-framework)
 
 ## The Product Standard
 
