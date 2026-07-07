@@ -9,7 +9,8 @@
     "start": "next start",
     "lint": "eslint",
     "check:quality-rubric": "node scripts/check-quality-rubric.mjs",
-    "check:quality-fixtures": "node scripts/evaluate-quality-fixtures.mjs"
+    "check:quality-fixtures": "node scripts/evaluate-quality-fixtures.mjs",
+    "check:family-memory": "node scripts/check-family-memory.mjs"
   },
   "dependencies": {
     "@react-spring/three": "^10.1.1",

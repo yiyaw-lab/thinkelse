@@ -122,6 +122,7 @@ docs/
   THINKELSE_CONSTITUTION.md — Product principles and long-horizon learning philosophy
   ELSY_QUALITY_RUBRIC.md — Canonical review standard for quests, dinner, and replies
   ELSY_EVALUATION_HARNESS.md — Deterministic fixtures for quest and dinner quality
+  FAMILY_MEMORY_ENGINE.md — Schema-compatible family learning profile contract
   EVIDENCE_INFORMED_TECHNIQUES.md — Research-backed quest methodology catalog
 ```
 

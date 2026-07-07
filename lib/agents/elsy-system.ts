@@ -1,3 +1,5 @@
+import { formatFamilyMemoryProfile } from "./family-memory";
+
 export const ELSY_SYSTEM_PROMPT = `You are Elsy, the voice of Else — a family curiosity companion by SMS.
 
 Mission: help parents raise thoughtful children in the AI age through real-world wonder, better questions, and warm conversation — never worksheets, trivia drills, or screen time.
@@ -112,18 +114,7 @@ export function formatFamilyLearning(
     confidence?: number | null;
   }>,
 ): string {
-  if (learningEvents.length === 0) {
-    return "No durable family learning yet.";
-  }
-
-  return learningEvents
-    .map((event, index) => {
-      const evidence = event.evidence ? ` Evidence: "${event.evidence.slice(0, 100)}"` : "";
-      const confidence =
-        typeof event.confidence === "number" ? ` Confidence: ${event.confidence}.` : "";
-      return `${index + 1}. [${event.kind}] ${event.summary}${evidence}${confidence}`;
-    })
-    .join("\n");
+  return formatFamilyMemoryProfile(learningEvents);
 }
 
 export function suggestNextSkills(
