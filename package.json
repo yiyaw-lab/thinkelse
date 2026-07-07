@@ -15,7 +15,8 @@
     "check:dinner-playbook": "node scripts/check-dinner-playbook.mjs",
     "check:world-context": "node scripts/check-world-context-cards.mjs",
     "check:parent-companion": "node scripts/check-parent-companion.mjs",
-    "check:scheduler-windows": "node scripts/check-scheduler-windows.mjs"
+    "check:scheduler-windows": "node scripts/check-scheduler-windows.mjs",
+    "check:lighthouse-pilot": "node scripts/check-lighthouse-pilot.mjs"
   },
   "dependencies": {
     "@react-spring/three": "^10.1.1",
