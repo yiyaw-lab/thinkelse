@@ -2,17 +2,30 @@ import type { FamilyDinnerContext } from "./build-dinner-context";
 
 export type WorldContextAgeBand = "5-7" | "8-10" | "11-12";
 export type WorldContextLevel = "none" | "light" | "deeper";
+export type WorldContextIssueFamily =
+  | "automation-and-judgment"
+  | "truth-and-trust"
+  | "fairness-and-rules"
+  | "shared-resources"
+  | "future-stewardship"
+  | "community-care"
+  | "disagreement-and-belonging"
+  | "accountability-and-repair"
+  | "privacy-and-sharing"
+  | "helping-and-responsibility";
 
 export type WorldContextCard = {
   id: string;
   title: string;
   issue: string;
+  issueFamily: WorldContextIssueFamily;
   ageBands: readonly WorldContextAgeBand[];
   sensitivity: "light" | "medium";
   skills: readonly string[];
   tags: readonly string[];
   focusTerms: readonly string[];
   childFriendlyFrame: string;
+  tableScaleTranslations: readonly string[];
   dinnerQuestionSeeds: readonly string[];
   parentMoveSeeds: readonly string[];
   avoid: readonly string[];
@@ -24,14 +37,17 @@ export type SelectedWorldContextCard = Pick<
   | "id"
   | "title"
   | "issue"
+  | "issueFamily"
   | "sensitivity"
   | "skills"
   | "tags"
   | "focusTerms"
   | "childFriendlyFrame"
+  | "tableScaleTranslations"
   | "dinnerQuestionSeeds"
   | "parentMoveSeeds"
   | "avoid"
+  | "reviewedAt"
 >;
 
 export const WORLD_CONTEXT_CARDS: readonly WorldContextCard[] = [
@@ -40,6 +56,7 @@ export const WORLD_CONTEXT_CARDS: readonly WorldContextCard[] = [
     title: "AI and Human Judgment",
     issue:
       "People increasingly use automated tools to help make choices, but families still need to ask when a human should slow down and judge carefully.",
+    issueFamily: "automation-and-judgment",
     ageBands: ["8-10", "11-12"],
     sensitivity: "light",
     skills: ["source-evaluation", "critical-thinking", "decision-making"],
@@ -47,6 +64,10 @@ export const WORLD_CONTEXT_CARDS: readonly WorldContextCard[] = [
     focusTerms: ["tool", "machine", "robot", "human", "person", "trust", "judgment"],
     childFriendlyFrame:
       "A tool can be helpful and still miss something important about a person or situation.",
+    tableScaleTranslations: [
+      "A calculator, map, robot toy, or school tool gives an answer that a person should still double-check.",
+      "A rule or tool is efficient, but someone at the table notices a person-specific exception.",
+    ],
     dinnerQuestionSeeds: [
       "When should a person double-check a tool before trusting its answer?",
       "What can a person notice that a machine or rule might miss?",
@@ -66,6 +87,7 @@ export const WORLD_CONTEXT_CARDS: readonly WorldContextCard[] = [
     title: "Rumors and Evidence",
     issue:
       "Fast-spreading claims can feel true before anyone has checked what actually happened.",
+    issueFamily: "truth-and-trust",
     ageBands: ["5-7", "8-10", "11-12"],
     sensitivity: "light",
     skills: ["evidence-seeking", "source-evaluation", "epistemic-honesty"],
@@ -73,6 +95,10 @@ export const WORLD_CONTEXT_CARDS: readonly WorldContextCard[] = [
     focusTerms: ["story", "true", "check", "evidence", "clue", "rumor"],
     childFriendlyFrame:
       "A story can be interesting before we know whether it is true.",
+    tableScaleTranslations: [
+      "A school story or family memory sounds believable, but nobody at the table has checked the clue yet.",
+      "Someone repeats something they heard, then pauses to ask what would make it fair to believe.",
+    ],
     dinnerQuestionSeeds: [
       "If everyone repeated a story but no one saw it happen, what would be a fair way to check it?",
       "What clues help you decide whether a story probably happened?",
@@ -92,6 +118,7 @@ export const WORLD_CONTEXT_CARDS: readonly WorldContextCard[] = [
     title: "Fair Rules",
     issue:
       "Rules can help people feel safe and included, but one rule can affect different people differently.",
+    issueFamily: "fairness-and-rules",
     ageBands: ["5-7", "8-10", "11-12"],
     sensitivity: "light",
     skills: ["values-reasoning", "perspective-taking", "decision-making"],
@@ -99,6 +126,10 @@ export const WORLD_CONTEXT_CARDS: readonly WorldContextCard[] = [
     focusTerms: ["rule", "fair", "same", "everyone", "needs"],
     childFriendlyFrame:
       "A rule can be simple and still not feel fair to everyone.",
+    tableScaleTranslations: [
+      "A turn, seat, game rule, or family routine works for most people but not everyone tonight.",
+      "Two children want a rule to be equal, but one person has a different need.",
+    ],
     dinnerQuestionSeeds: [
       "What makes a family or game rule feel fair even when someone does not get their first choice?",
       "When should a rule be the same for everyone, and when should it change for someone's needs?",
@@ -117,6 +148,7 @@ export const WORLD_CONTEXT_CARDS: readonly WorldContextCard[] = [
     title: "Limited Resources",
     issue:
       "Families, classrooms, and communities often decide how to share limited time, attention, space, or materials.",
+    issueFamily: "shared-resources",
     ageBands: ["5-7", "8-10", "11-12"],
     sensitivity: "light",
     skills: ["systems-thinking", "values-reasoning", "decision-making"],
@@ -124,6 +156,10 @@ export const WORLD_CONTEXT_CARDS: readonly WorldContextCard[] = [
     focusTerms: ["share", "enough", "first", "needs", "fair"],
     childFriendlyFrame:
       "Sometimes there is not enough of something for everyone to get exactly what they want.",
+    tableScaleTranslations: [
+      "There is one last bite, turn, seat, charger, or parent attention window and more than one person wants it.",
+      "A family has to choose whether first-ask, greatest-need, waiting-longest, or taking-turns is fairest.",
+    ],
     dinnerQuestionSeeds: [
       "If there was not enough of something everyone wanted, what would be a fair way to share it?",
       "Should the person who asks first, needs it most, or waited longest get first choice?",
@@ -142,6 +178,7 @@ export const WORLD_CONTEXT_CARDS: readonly WorldContextCard[] = [
     title: "Climate and Everyday Tradeoffs",
     issue:
       "People make choices that balance convenience, cost, care for nature, and care for other people.",
+    issueFamily: "future-stewardship",
     ageBands: ["8-10", "11-12"],
     sensitivity: "medium",
     skills: ["systems-thinking", "future-thinking", "values-reasoning"],
@@ -149,6 +186,10 @@ export const WORLD_CONTEXT_CARDS: readonly WorldContextCard[] = [
     focusTerms: ["planet", "future", "nature", "convenience", "care"],
     childFriendlyFrame:
       "Caring for the future often means choosing between more than one good thing.",
+    tableScaleTranslations: [
+      "A family choice is easier tonight but less caring for a shared place or future person.",
+      "A convenient habit helps now, while a slightly harder habit may protect something people care about later.",
+    ],
     dinnerQuestionSeeds: [
       "When a choice is easier for us but harder on the planet, how should a family decide what to do?",
       "What is one small family choice where convenience and care pull in different directions?",
@@ -167,6 +208,7 @@ export const WORLD_CONTEXT_CARDS: readonly WorldContextCard[] = [
     title: "Public Spaces",
     issue:
       "Shared spaces work only when people balance freedom, responsibility, and care for strangers.",
+    issueFamily: "community-care",
     ageBands: ["5-7", "8-10", "11-12"],
     sensitivity: "light",
     skills: ["kindness-in-action", "systems-thinking", "values-reasoning"],
@@ -174,6 +216,10 @@ export const WORLD_CONTEXT_CARDS: readonly WorldContextCard[] = [
     focusTerms: ["shared", "belongs", "everyone", "place", "responsibility"],
     childFriendlyFrame:
       "A shared place belongs to everyone, including people we will never meet.",
+    tableScaleTranslations: [
+      "A table, classroom, park, sidewalk, or shared game space feels different when people leave it better.",
+      "Someone can do what they want in a shared place, but that choice changes what others inherit next.",
+    ],
     dinnerQuestionSeeds: [
       "How should people act in a place that belongs to everyone?",
       "What is one small thing that makes a shared place feel cared for?",
@@ -192,6 +238,7 @@ export const WORLD_CONTEXT_CARDS: readonly WorldContextCard[] = [
     title: "Disagreement Without Contempt",
     issue:
       "People can disagree strongly and still listen well enough to understand the other person's reasons.",
+    issueFamily: "disagreement-and-belonging",
     ageBands: ["8-10", "11-12"],
     sensitivity: "light",
     skills: ["perspective-taking", "intellectual-humility", "communication"],
@@ -199,6 +246,10 @@ export const WORLD_CONTEXT_CARDS: readonly WorldContextCard[] = [
     focusTerms: ["disagree", "listening", "respect", "heard", "reasons"],
     childFriendlyFrame:
       "A disagreement can be serious without turning someone into the bad guy.",
+    tableScaleTranslations: [
+      "Two people at dinner prefer different things and each has one good reason.",
+      "A friend or sibling disagreement becomes easier to handle when someone repeats the other person's strongest point.",
+    ],
     dinnerQuestionSeeds: [
       "How can you tell whether someone is really listening during a disagreement?",
       "What is one sentence that helps a disagreement stay respectful?",
@@ -217,6 +268,7 @@ export const WORLD_CONTEXT_CARDS: readonly WorldContextCard[] = [
     title: "Accountability and Apologies",
     issue:
       "A real apology includes truth, repair, and changed behavior, not just the right words.",
+    issueFamily: "accountability-and-repair",
     ageBands: ["5-7", "8-10", "11-12"],
     sensitivity: "light",
     skills: ["epistemic-honesty", "kindness-in-action", "self-regulation"],
@@ -224,6 +276,10 @@ export const WORLD_CONTEXT_CARDS: readonly WorldContextCard[] = [
     focusTerms: ["apology", "sorry", "repair", "trust", "honest"],
     childFriendlyFrame:
       "Saying sorry matters more when it helps repair what happened.",
+    tableScaleTranslations: [
+      "A pretend apology at the table has the right words but does not yet repair trust.",
+      "Someone makes a small mistake and has to choose between hiding it, naming it, or repairing it.",
+    ],
     dinnerQuestionSeeds: [
       "How can you tell whether an apology is real?",
       "What should someone do after saying sorry so the other person can trust them again?",
@@ -242,6 +298,7 @@ export const WORLD_CONTEXT_CARDS: readonly WorldContextCard[] = [
     title: "Popularity and Courage",
     issue:
       "Doing the kind or honest thing can be harder when a group is watching.",
+    issueFamily: "disagreement-and-belonging",
     ageBands: ["8-10", "11-12"],
     sensitivity: "light",
     skills: ["values-reasoning", "kindness-in-action", "perspective-taking"],
@@ -249,6 +306,10 @@ export const WORLD_CONTEXT_CARDS: readonly WorldContextCard[] = [
     focusTerms: ["kind", "brave", "group", "laugh", "popular"],
     childFriendlyFrame:
       "Sometimes the right thing is harder when it might make you less popular.",
+    tableScaleTranslations: [
+      "A group laughs, and one person has to decide whether to join in, stay quiet, or make a kind move.",
+      "A child sees a small unfairness and wonders what brave could look like without making things worse.",
+    ],
     dinnerQuestionSeeds: [
       "When is it worth doing the kind thing even if other people might laugh?",
       "What makes someone brave in a group?",
@@ -267,6 +328,7 @@ export const WORLD_CONTEXT_CARDS: readonly WorldContextCard[] = [
     title: "Privacy and Sharing",
     issue:
       "People share photos, stories, and information quickly, but not everything that can be shared should be shared.",
+    issueFamily: "privacy-and-sharing",
     ageBands: ["8-10", "11-12"],
     sensitivity: "light",
     skills: ["decision-making", "source-evaluation", "perspective-taking"],
@@ -274,6 +336,10 @@ export const WORLD_CONTEXT_CARDS: readonly WorldContextCard[] = [
     focusTerms: ["share", "ask", "private", "trust", "person"],
     childFriendlyFrame:
       "Sharing something about another person can affect their trust.",
+    tableScaleTranslations: [
+      "A funny story, photo, drawing, or mistake is easy to share, but it belongs partly to someone else.",
+      "Someone wants to tell a story at dinner and pauses to ask whether it is theirs to share.",
+    ],
     dinnerQuestionSeeds: [
       "When should you ask before sharing something about another person?",
       "How can you tell whether something is yours to share?",
@@ -292,6 +358,7 @@ export const WORLD_CONTEXT_CARDS: readonly WorldContextCard[] = [
     title: "Helping Near and Far",
     issue:
       "People often choose between helping someone nearby and caring about people they may never meet.",
+    issueFamily: "helping-and-responsibility",
     ageBands: ["8-10", "11-12"],
     sensitivity: "medium",
     skills: ["values-reasoning", "systems-thinking", "kindness-in-action"],
@@ -299,6 +366,10 @@ export const WORLD_CONTEXT_CARDS: readonly WorldContextCard[] = [
     focusTerms: ["help", "nearby", "farther", "first", "needs"],
     childFriendlyFrame:
       "Caring can be local, global, immediate, or long-term.",
+    tableScaleTranslations: [
+      "A family can help someone nearby right now or save effort for someone farther away who also matters.",
+      "A child has one helping move to spend and has to choose between what is visible and what may matter more.",
+    ],
     dinnerQuestionSeeds: [
       "How should a person decide whom to help first when many people need help?",
       "Is helping nearby more important, easier, or just more visible?",
@@ -317,6 +388,7 @@ export const WORLD_CONTEXT_CARDS: readonly WorldContextCard[] = [
     title: "When Experts Disagree",
     issue:
       "Experts can disagree because evidence is incomplete, values differ, or a problem has tradeoffs.",
+    issueFamily: "truth-and-trust",
     ageBands: ["11-12"],
     sensitivity: "light",
     skills: ["source-evaluation", "uncertainty-calibration", "intellectual-humility"],
@@ -324,6 +396,10 @@ export const WORLD_CONTEXT_CARDS: readonly WorldContextCard[] = [
     focusTerms: ["expert", "disagree", "trust", "evidence", "unsure"],
     childFriendlyFrame:
       "Disagreement between careful people can be a sign that a question is hard.",
+    tableScaleTranslations: [
+      "Two careful people at the table disagree because they are using different clues.",
+      "A family has to decide what to do when both sides have reasons and nobody is fully sure yet.",
+    ],
     dinnerQuestionSeeds: [
       "If two careful experts disagree, what questions would help you decide whom to trust more?",
       "What is the difference between guessing and being honestly unsure?",
@@ -473,14 +549,17 @@ export function selectWorldContextCard(
     id: selected.id,
     title: selected.title,
     issue: selected.issue,
+    issueFamily: selected.issueFamily,
     sensitivity: selected.sensitivity,
     skills: selected.skills,
     tags: selected.tags,
     focusTerms: selected.focusTerms,
     childFriendlyFrame: selected.childFriendlyFrame,
+    tableScaleTranslations: selected.tableScaleTranslations,
     dinnerQuestionSeeds: selected.dinnerQuestionSeeds,
     parentMoveSeeds: selected.parentMoveSeeds,
     avoid: selected.avoid,
+    reviewedAt: selected.reviewedAt,
   };
 }
 
@@ -493,11 +572,15 @@ export function formatWorldContextGuidance(
 
   return `World-context lens - optional inspiration only. Do not mention headlines, politicians, parties, graphic events, or ask the child to know the news.
 Card: ${card.title}
+Issue family: ${card.issueFamily}
+Reviewed: ${card.reviewedAt}
 Underlying issue: ${card.issue}
 Child-friendly frame: ${card.childFriendlyFrame}
 Skills: ${card.skills.join(", ")}
 The dinner question or follow-up must clearly reflect at least one of these focus terms without sounding like a news summary: ${card.focusTerms.join(", ")}
 Translate broad issues into a concrete table-scale example the youngest child can answer immediately. Use examples like a turn, last bite, seat, family rule, school moment, friend situation, or a game they already know.
+Table-scale translations to adapt, not copy:
+${card.tableScaleTranslations.map((translation) => `- ${translation}`).join("\n")}
 Do not ask the child to design a whole game, society, system, or policy. Avoid abstract words like "resource", "players", and "decision-making model" when a concrete example can carry the idea.
 Question seeds to adapt, not copy:
 ${card.dinnerQuestionSeeds.map((seed) => `- ${seed}`).join("\n")}
