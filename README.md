@@ -121,6 +121,7 @@ docs/
   ARCHITECTURE.md     — Architecture decisions
   THINKELSE_CONSTITUTION.md — Product principles and long-horizon learning philosophy
   ELSY_QUALITY_RUBRIC.md — Canonical review standard for quests, dinner, and replies
+  ELSY_EVALUATION_HARNESS.md — Deterministic fixtures for quest and dinner quality
   EVIDENCE_INFORMED_TECHNIQUES.md — Research-backed quest methodology catalog
 ```
 
