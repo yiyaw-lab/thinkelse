@@ -37,6 +37,9 @@ jobs:
       - name: Check world-context cards
         run: npm run check:world-context
 
+      - name: Check parent companion
+        run: npm run check:parent-companion
+
       - name: Typecheck
         run: npx tsc --noEmit
 

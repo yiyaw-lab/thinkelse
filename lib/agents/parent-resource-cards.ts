@@ -11,6 +11,9 @@ export type ParentResourceCard = {
   skills: readonly string[];
   triggerTerms: readonly string[];
   why: string;
+  companionMove: string;
+  watchFor: string;
+  ifStuck: string;
   tryThis: string;
   safetyNote: string;
   reviewedAt: string;
@@ -37,6 +40,12 @@ export const PARENT_RESOURCE_CARDS: readonly ParentResourceCard[] = [
     triggerTerms: ["notice", "listen", "conversation", "wait", "respond", "attention"],
     why:
       "This prompt is built for a short back-and-forth: your child notices, you respond, then they get another turn.",
+    companionMove:
+      "Follow one thing your child notices, say one detail back, then wait a beat before adding your own idea.",
+    watchFor:
+      "A good moment is when your child adds a second detail, corrects you, or asks their own question.",
+    ifStuck:
+      "Offer two concrete choices: 'Should we look closer, or try it a different way?'",
     tryThis:
       "Pause after their first answer and ask, 'What makes you say that?'",
     safetyNote:
@@ -58,6 +67,12 @@ export const PARENT_RESOURCE_CARDS: readonly ParentResourceCard[] = [
     triggerTerms: ["evidence", "true", "trust", "source", "rumor", "claim", "proof"],
     why:
       "This prompt practices slowing down before believing a claim: What do we know, and what would count as evidence?",
+    companionMove:
+      "Help your child separate what they saw, what they guessed, and what would make the claim stronger.",
+    watchFor:
+      "A strong answer names a clue, source, or condition that could change their mind.",
+    ifStuck:
+      "Use a harmless example from home, then ask, 'What would we need to see before trusting that?'",
     tryThis:
       "Separate 'I know,' 'I think,' and 'I wonder' before deciding.",
     safetyNote:
@@ -80,6 +95,12 @@ export const PARENT_RESOURCE_CARDS: readonly ParentResourceCard[] = [
     triggerTerms: ["compare", "pattern", "reason", "explain", "same", "different", "changed"],
     why:
       "This prompt helps make thinking visible: children compare ideas, explain reasons, and revise with new evidence.",
+    companionMove:
+      "Ask for one reason, then ask whether a different example would make that reason stronger or weaker.",
+    watchFor:
+      "Listen for comparison words like same, different, because, maybe, or I changed my mind.",
+    ifStuck:
+      "Start the sentence for them: 'One thing that is the same is...' and let them finish.",
     tryThis:
       "Ask, 'What part of your idea feels strongest, and what part are you less sure about?'",
     safetyNote:
@@ -109,6 +130,12 @@ export const PARENT_RESOURCE_CARDS: readonly ParentResourceCard[] = [
     ],
     why:
       "This prompt gives children practice navigating tradeoffs: more than one value can matter at the same time.",
+    companionMove:
+      "Ask who is helped now, who might be affected later, and what choice protects the most important value.",
+    watchFor:
+      "The best part is when your child notices two good things can pull in different directions.",
+    ifStuck:
+      "Make it smaller: use a turn, seat, last bite, or family rule before talking about bigger choices.",
     tryThis:
       "Ask who is helped, who might be affected later, and what tradeoff feels acceptable.",
     safetyNote:
@@ -125,6 +152,12 @@ export const PARENT_RESOURCE_CARDS: readonly ParentResourceCard[] = [
     triggerTerms: ["expert", "website", "internet", "news", "source", "trust", "claim"],
     why:
       "This prompt supports a parent-friendly version of source sense: check who is making a claim before trusting it.",
+    companionMove:
+      "Ask who would know this well, what they might miss, and what another trustworthy source would show.",
+    watchFor:
+      "A useful response names who made the claim or what evidence would make it more reliable.",
+    ifStuck:
+      "Keep it offline: use a cereal box, sign, family story, or tool answer as the claim.",
     tryThis:
       "Ask, 'Who would know this well, and what would they need to show us?'",
     safetyNote:
@@ -147,9 +180,12 @@ const RESOURCE_CARD_BANNED_COPY = [
 
 export function validateParentResourceCard(card: ParentResourceCard): string[] {
   const issues: string[] = [];
-  const copy = `${card.why} ${card.tryThis} ${card.safetyNote}`;
+  const copy = `${card.why} ${card.companionMove} ${card.watchFor} ${card.ifStuck} ${card.tryThis} ${card.safetyNote}`;
 
   if (!card.why.trim()) issues.push(`${card.id}: why is empty`);
+  if (!card.companionMove.trim()) issues.push(`${card.id}: companionMove is empty`);
+  if (!card.watchFor.trim()) issues.push(`${card.id}: watchFor is empty`);
+  if (!card.ifStuck.trim()) issues.push(`${card.id}: ifStuck is empty`);
   if (!card.tryThis.trim()) issues.push(`${card.id}: tryThis is empty`);
   if (!card.safetyNote.trim()) issues.push(`${card.id}: safetyNote is empty`);
   if (!card.sourceName.trim()) issues.push(`${card.id}: sourceName is empty`);
@@ -158,6 +194,15 @@ export function validateParentResourceCard(card: ParentResourceCard): string[] {
   }
   if (!/\b(?:ask|pause|separate|use|keep|avoid|do not)\b/i.test(card.tryThis)) {
     issues.push(`${card.id}: tryThis needs a concrete parent move`);
+  }
+  if (!/\b(?:ask|follow|help|offer|make|keep|start)\b/i.test(card.companionMove)) {
+    issues.push(`${card.id}: companionMove needs a concrete parent action`);
+  }
+  if (!/\b(?:listen|watch|notice|strong|good|useful|best)\b/i.test(card.watchFor)) {
+    issues.push(`${card.id}: watchFor needs an observable signal`);
+  }
+  if (!/\b(?:offer|use|start|make|keep)\b/i.test(card.ifStuck)) {
+    issues.push(`${card.id}: ifStuck needs a recovery move`);
   }
   if (!/\b(?:claim|support|not|avoid|keep|age-appropriate|parent context|conversation)\b/i.test(card.safetyNote)) {
     issues.push(`${card.id}: safetyNote needs a clear boundary`);
@@ -251,10 +296,19 @@ export function formatParentResourceMessage(
   return `Parent context for this ${label}${title}:
 ${card.why}
 
-Try: ${card.tryThis}
+Parent move:
+${card.companionMove}
+
+Watch for:
+${card.watchFor}
+
+If it stalls:
+${card.ifStuck}
 
 Resource: ${card.sourceName} - ${card.title}
 ${card.url}
 
 Note: ${card.safetyNote}`;
 }
+
+export const formatParentCompanionMessage = formatParentResourceMessage;

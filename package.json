@@ -13,7 +13,8 @@
     "check:family-memory": "node scripts/check-family-memory.mjs",
     "check:learning-arcs": "node scripts/check-learning-arcs.mjs",
     "check:dinner-playbook": "node scripts/check-dinner-playbook.mjs",
-    "check:world-context": "node scripts/check-world-context-cards.mjs"
+    "check:world-context": "node scripts/check-world-context-cards.mjs",
+    "check:parent-companion": "node scripts/check-parent-companion.mjs"
   },
   "dependencies": {
     "@react-spring/three": "^10.1.1",
