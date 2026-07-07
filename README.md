@@ -133,6 +133,7 @@ docs/
   PARENT_COMPANION_LAYER.md — WHY response and parent-context contract
   SCHEDULER_RELIABILITY.md — Cron window semantics and dry-run observability
   LIGHTHOUSE_PILOT_LOOP.md — Early-family feedback synthesis loop
+  METHODOLOGY_SYSTEM.md — Evidence-methodology operating contract and audit
   EVIDENCE_INFORMED_TECHNIQUES.md — Research-backed quest methodology catalog
 ```
 
