@@ -11,6 +11,7 @@ import {
 import { formatTechniqueGuidance, selectQuestTechniques } from "./research-techniques";
 import { formatTemporalContext } from "./temporal-context";
 import { validateQuest } from "./quest-quality";
+import { formatLearningArcGuidance } from "./learning-arcs";
 import { formatQuestVarietyGuidance } from "./quest-variety";
 import { formatRubricGuidance } from "./quality-rubric";
 import type { FamilyQuestContext } from "./types";
@@ -32,6 +33,7 @@ function buildQuestPrompt(context: FamilyQuestContext, revisionNotes?: string[])
     : "Parent name: unknown";
   const isFirstQuest = context.questNumber <= 1 || context.recentQuests.length === 0;
   const techniqueGuidance = formatTechniqueGuidance(selectQuestTechniques(context));
+  const learningArcGuidance = formatLearningArcGuidance(context);
   const varietyGuidance = formatQuestVarietyGuidance(context);
   const launchGuidance = isFirstQuest
     ? `
@@ -71,6 +73,8 @@ ${formatFamilyLearning(context.learningEvents)}
 
 Evidence-informed method lens — invisible design layer. Choose ONE best-fit lens below and make the quest feel natural. Do not mention research, citations, technique names, "brain training", or future-skills jargon to the parent:
 ${techniqueGuidance}
+
+${learningArcGuidance}
 
 ${varietyGuidance}
 

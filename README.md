@@ -30,7 +30,9 @@ hands off to the AI reasoning layer in `lib/agents`, the database helpers in
 single source of truth; OpenAI generates and interprets quests; Telnyx carries
 SMS in both directions. Quest generation also draws from a typed
 evidence-informed technique catalog in `lib/agents/research-techniques.ts`,
-documented in `docs/EVIDENCE_INFORMED_TECHNIQUES.md`.
+documented in `docs/EVIDENCE_INFORMED_TECHNIQUES.md`, and an invisible
+week-level learning arc selector in `lib/agents/learning-arcs.ts`, documented
+in `docs/LEARNING_ARCS.md`.
 
 There are two entry points. **Inbound SMS** (`/api/sms/inbound`) is a Telnyx
 webhook that verifies the signature, then either runs SMS compliance keywords
@@ -123,6 +125,7 @@ docs/
   ELSY_QUALITY_RUBRIC.md — Canonical review standard for quests, dinner, and replies
   ELSY_EVALUATION_HARNESS.md — Deterministic fixtures for quest and dinner quality
   FAMILY_MEMORY_ENGINE.md — Schema-compatible family learning profile contract
+  LEARNING_ARCS.md — Week-level quest continuity layer
   EVIDENCE_INFORMED_TECHNIQUES.md — Research-backed quest methodology catalog
 ```
 
