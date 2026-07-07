@@ -12,6 +12,7 @@ import { formatTechniqueGuidance, selectQuestTechniques } from "./research-techn
 import { formatTemporalContext } from "./temporal-context";
 import { validateQuest } from "./quest-quality";
 import { formatQuestVarietyGuidance } from "./quest-variety";
+import { formatRubricGuidance } from "./quality-rubric";
 import type { FamilyQuestContext } from "./types";
 
 export type GeneratedQuest = {
@@ -76,6 +77,8 @@ ${varietyGuidance}
 Prefer a fresh cognitive skill from: ${suggestNextSkills(context.recentQuests)}
 
 ${launchGuidance}
+
+${formatRubricGuidance("quest")}
 
 Quality bar:
 - audience: parent reads the SMS and shares with ${context.childName} — never write as if the child is texting Elsy

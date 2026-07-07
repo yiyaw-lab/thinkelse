@@ -19,6 +19,9 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Check Elsy quality rubric
+        run: npm run check:quality-rubric
+
       - name: Typecheck
         run: npx tsc --noEmit
 
