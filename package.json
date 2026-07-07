@@ -11,7 +11,8 @@
     "check:quality-rubric": "node scripts/check-quality-rubric.mjs",
     "check:quality-fixtures": "node scripts/evaluate-quality-fixtures.mjs",
     "check:family-memory": "node scripts/check-family-memory.mjs",
-    "check:learning-arcs": "node scripts/check-learning-arcs.mjs"
+    "check:learning-arcs": "node scripts/check-learning-arcs.mjs",
+    "check:dinner-playbook": "node scripts/check-dinner-playbook.mjs"
   },
   "dependencies": {
     "@react-spring/three": "^10.1.1",

@@ -31,6 +31,9 @@ jobs:
       - name: Check learning arcs
         run: npm run check:learning-arcs
 
+      - name: Check dinner playbook
+        run: npm run check:dinner-playbook
+
       - name: Typecheck
         run: npx tsc --noEmit
 

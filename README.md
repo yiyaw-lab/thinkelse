@@ -32,7 +32,9 @@ SMS in both directions. Quest generation also draws from a typed
 evidence-informed technique catalog in `lib/agents/research-techniques.ts`,
 documented in `docs/EVIDENCE_INFORMED_TECHNIQUES.md`, and an invisible
 week-level learning arc selector in `lib/agents/learning-arcs.ts`, documented
-in `docs/LEARNING_ARCS.md`.
+in `docs/LEARNING_ARCS.md`. Dinner conversation generation uses a deterministic
+table-frame playbook in `lib/agents/dinner-playbook.ts`, documented in
+`docs/DINNER_CONVERSATION_PRODUCT.md`.
 
 There are two entry points. **Inbound SMS** (`/api/sms/inbound`) is a Telnyx
 webhook that verifies the signature, then either runs SMS compliance keywords
@@ -126,6 +128,7 @@ docs/
   ELSY_EVALUATION_HARNESS.md — Deterministic fixtures for quest and dinner quality
   FAMILY_MEMORY_ENGINE.md — Schema-compatible family learning profile contract
   LEARNING_ARCS.md — Week-level quest continuity layer
+  DINNER_CONVERSATION_PRODUCT.md — Table-ready dinner conversation contract
   EVIDENCE_INFORMED_TECHNIQUES.md — Research-backed quest methodology catalog
 ```
 

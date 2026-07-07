@@ -10,6 +10,10 @@ import {
 import { formatTechniqueGuidance, selectQuestTechniques } from "./research-techniques";
 import { formatTemporalContext } from "./temporal-context";
 import { validateDinnerConversation } from "./dinner-quality";
+import {
+  formatDinnerPlaybookGuidance,
+  selectDinnerPlaybookFrame,
+} from "./dinner-playbook";
 import { formatRubricGuidance } from "./quality-rubric";
 import {
   formatWorldContextGuidance,
@@ -124,6 +128,10 @@ function buildDinnerPrompt(
   const ageGuidance = context.children
     .map((child) => `${child.name}: ${getAgeGuidance(child.age)}`)
     .join("\n");
+  const dinnerPlaybookGuidance = formatDinnerPlaybookGuidance(
+    context,
+    worldContextCard,
+  );
 
   return `
 Create ONE optional dinner-table conversation prompt for this family.
@@ -148,6 +156,8 @@ ${formatFamilyLearning(context.familyLearningEvents)}
 
 Evidence-informed method lens - invisible design layer. Choose ONE best-fit lens below. Do not mention research, citations, technique names, "brain training", or future-skills jargon to the parent:
 ${selectDinnerTechniqueGuidance(context)}
+
+${dinnerPlaybookGuidance}
 
 ${formatWorldContextGuidance(worldContextCard)}
 
@@ -234,8 +244,22 @@ function fallbackQuestionForWorldContext(
 }
 
 function buildFallbackDinnerConversation(
+  context: FamilyDinnerContext,
   worldContextCard: SelectedWorldContextCard | null,
 ): GeneratedDinnerConversation {
+  const frame = selectDinnerPlaybookFrame(context, worldContextCard);
+
+  if (!worldContextCard) {
+    return {
+      question: frame.fallbackQuestion,
+      whyThis:
+        "This turns dinner into a concrete chance to hear reasons and think else together.",
+      parentMove: frame.parentMove,
+      followUp: frame.fallbackFollowUp,
+      skill: frame.skill,
+    };
+  }
+
   return {
     question: fallbackQuestionForWorldContext(worldContextCard),
     whyThis:
@@ -309,7 +333,7 @@ export async function generateDinnerConversation(
     issues = validateDinnerConversation(dinner, worldContextCard, context);
     if (issues.length > 0) {
       console.warn("Dinner conversation quality issues after retry:", issues);
-      return buildFallbackDinnerConversation(worldContextCard);
+      return buildFallbackDinnerConversation(context, worldContextCard);
     }
   }
 
