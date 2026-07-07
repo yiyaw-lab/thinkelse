@@ -131,6 +131,7 @@ docs/
   DINNER_CONVERSATION_PRODUCT.md — Table-ready dinner conversation contract
   WORLD_CONTEXT_CARDS.md — Current-issue-adjacent dinner card contract
   PARENT_COMPANION_LAYER.md — WHY response and parent-context contract
+  SCHEDULER_RELIABILITY.md — Cron window semantics and dry-run observability
   EVIDENCE_INFORMED_TECHNIQUES.md — Research-backed quest methodology catalog
 ```
 
@@ -223,6 +224,8 @@ Schedule: 0,30 * * * * (every 30 minutes, UTC)
 ```
 
 `CRON_SECRET` must be set in Vercel for Production. Do not store the secret in this repository. The cron runs every 30 minutes because onboarding accepts whole-hour and half-hour daily quest times, and `/api/cron/daily-quest` only sends when the family's preferred local hour and minute match. The route sends each child profile at most one quest per local day.
+The shared delivery-window contract is documented in
+`docs/SCHEDULER_RELIABILITY.md`.
 
 To verify who would receive a daily quest without sending SMS, call the cron in
 dry-run mode. This still requires `CRON_SECRET` in production and does not call
